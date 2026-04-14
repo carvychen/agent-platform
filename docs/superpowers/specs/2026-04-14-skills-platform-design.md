@@ -313,6 +313,12 @@ skill-name/
 > **Enhancement: 行列号**
 > 状态栏需显示光标位置（Ln/Col）。
 
+> **Enhancement: 未保存离开警告**
+> 编辑器有未保存内容时，浏览器关闭/刷新或站内导航应弹出确认提示。
+
+> **Enhancement: 快捷键面板**
+> 添加快捷键帮助弹窗（Cmd+?），展示 Save、Quick Open 等可用快捷键。
+
 ### 4.6 详情/预览页
 
 **已实现：**
@@ -342,8 +348,6 @@ skill-name/
 > **Enhancement: 标题锚点**
 > Markdown 标题需添加 `id` 属性和锚点链接图标。
 
-> **Enhancement: 代码块深色主题**
-> 当前使用 `oneLight` 浅色主题，可改为深色主题以匹配编辑器风格。
 
 ## 5. 模板定义
 
@@ -430,6 +434,8 @@ skill-name/
 | 4 | `MarkdownRenderer.tsx:53-57` | frontmatter 剥离逻辑在文档含 `---` 分隔线时出错 |
 | 5 | `test_auth.py` | UserInfo 增加 tenant_id 后测试未更新 |
 | 6 | `test_blob_storage.py` | `_user_prefix` 重命名为 `_tenant_prefix` 后测试未更新 |
+| 7 | `useSkillFiles.ts` | `useDeleteFile`/`useRenameFile`/`useDeleteFolder` 的 optimistic update 缺少 `onSettled` 缓存同步，成功时不会与服务端重新对齐 |
+| 8 | `axiosClient.ts:39` | `acquireTokenSilent` 失败后返回 `null`，Axios 拦截器静默发送无认证请求，导致 401 |
 
 ## 9. 项目文件结构
 
@@ -523,7 +529,19 @@ frontend/
 └── .env.example
 ```
 
-## 10. 未来扩展点（暂不实现）
+## 10. 基础设施改进
+
+### 10.1 健康检查增强
+
+- **当前状态**：`/api/health` 返回简单的固定响应，不检查依赖服务
+- **要求**：增加 Blob Storage 连通性检查，启动时校验必需环境变量，返回结构化状态 `{"status": "healthy", "blob_storage": "connected"}`
+
+### 10.2 结构化日志
+
+- **当前状态**：无统一日志方案
+- **要求**：添加 JSON 格式结构化日志，记录认证失败、Blob 错误、导入/导出操作，包含请求关联 ID，不记录 token、文件内容或 PII
+
+## 11. 未来扩展点（暂不实现）
 
 - **Agent 模块**：创建 Agent 并绑定 skills
 - **Prompt 模块**：创建和管理 prompt templates

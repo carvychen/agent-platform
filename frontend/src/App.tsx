@@ -7,7 +7,11 @@ import { SkillCreatePage } from "./pages/skills/SkillCreatePage";
 import { SkillEditorPage } from "./pages/skills/SkillEditorPage";
 import { SkillDetailPage } from "./pages/skills/SkillDetailPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000 },
+  },
+});
 
 export default function App() {
   return (

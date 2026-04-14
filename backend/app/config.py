@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Azure Blob Storage
     blob_connection_string: str = ""
+    blob_account_url: str = ""
+    blob_account_name: str = ""
     blob_container_name: str = "skills-container"
 
     # Azure AD

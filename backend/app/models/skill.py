@@ -11,3 +11,7 @@ class SkillCreateRequest(BaseModel):
 
 class FileWriteRequest(BaseModel):
     content: str
+
+
+class FileRenameRequest(BaseModel):
+    new_path: str = Field(..., min_length=1)

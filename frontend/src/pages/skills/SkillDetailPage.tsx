@@ -1,12 +1,98 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { Pencil, Download, Trash2, File, Folder, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { Pencil, Trash2, File, Folder, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
+import { ExportDropdown } from "../../components/skills/ExportDropdown";
+import { UseGuide } from "../../components/skills/InstallGuide";
 import { TopBar } from "../../components/layout/TopBar";
 import { Breadcrumb } from "../../components/ui/Breadcrumb";
 import { SkillMetadataPills } from "../../components/skills/SkillMetadataPills";
 import { MarkdownRenderer } from "../../components/skills/MarkdownRenderer";
 import { useSkillDetail, useDeleteSkill } from "../../hooks/useSkills";
 import { useFileContent } from "../../hooks/useSkillFiles";
+import { downloadSkill } from "../../api/skillsApi";
+import { useRoles } from "../../auth/useRoles";
+
+// -- Lightweight read-only file tree for the detail sidebar --
+
+interface TreeNode {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  children: TreeNode[];
+  size: number;
+}
+
+function buildTree(files: { path: string; size: number }[]): TreeNode[] {
+  const root: TreeNode[] = [];
+  for (const file of files) {
+    const parts = file.path.split("/");
+    let current = root;
+    for (let i = 0; i < parts.length; i++) {
+      const isLast = i === parts.length - 1;
+      const name = parts[i];
+      const path = parts.slice(0, i + 1).join("/");
+      let node = current.find((n) => n.name === name);
+      if (!node) {
+        node = { name, path, isDirectory: !isLast, children: [], size: isLast ? file.size : 0 };
+        current.push(node);
+      }
+      current = node.children;
+    }
+  }
+  return root;
+}
+
+function sortNodes(nodes: TreeNode[]): TreeNode[] {
+  return [...nodes].sort((a, b) => {
+    if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function ReadOnlyTreeItem({ node, depth }: { node: TreeNode; depth: number }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (node.isDirectory) {
+    return (
+      <div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1.5 w-full min-w-0 py-0.5 text-text-secondary hover:text-text-primary transition-colors"
+          style={{ paddingLeft: `${depth * 14}px` }}
+        >
+          {expanded ? (
+            <ChevronDown className="w-3 h-3 shrink-0 text-text-muted" />
+          ) : (
+            <ChevronRight className="w-3 h-3 shrink-0 text-text-muted" />
+          )}
+          {expanded ? (
+            <FolderOpen className="w-3.5 h-3.5 shrink-0 text-amber-400/70" />
+          ) : (
+            <Folder className="w-3.5 h-3.5 shrink-0 text-amber-400/70" />
+          )}
+          <span className="truncate">{node.name}</span>
+        </button>
+        {expanded &&
+          sortNodes(node.children).map((child) => (
+            <ReadOnlyTreeItem key={child.path} node={child} depth={depth + 1} />
+          ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="flex items-center gap-1.5 min-w-0 py-0.5"
+      style={{ paddingLeft: `${depth * 14 + 16}px` }}
+    >
+      <File className="w-3 h-3 shrink-0 text-text-secondary" />
+      <span className="truncate text-text-secondary flex-1 min-w-0">{node.name}</span>
+      <span className="text-text-muted text-[10px] shrink-0 whitespace-nowrap">
+        {node.size > 1024 ? `${(node.size / 1024).toFixed(1)} KB` : `${node.size} B`}
+      </span>
+    </div>
+  );
+}
 
 export function SkillDetailPage() {
   const { name } = useParams<{ name: string }>();
@@ -14,19 +100,12 @@ export function SkillDetailPage() {
   const { data: skill, isLoading } = useSkillDetail(name!);
   const { data: skillMdContent } = useFileContent(name!, "SKILL.md");
   const deleteMutation = useDeleteSkill();
-  const [copied, setCopied] = useState(false);
+  const { canWrite } = useRoles();
 
   const handleDelete = async () => {
     if (!confirm(`Delete skill "${name}"? This cannot be undone.`)) return;
     await deleteMutation.mutateAsync(name!);
     navigate("/skills");
-  };
-
-  const installCmd = `claude skill add ${name}`;
-  const handleCopyInstall = () => {
-    navigator.clipboard.writeText(installCmd);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   if (isLoading) return <div className="p-8 text-text-muted">Loading...</div>;
@@ -43,15 +122,15 @@ export function SkillDetailPage() {
       <div className="flex-1 overflow-auto">
         {/* Hero header */}
         <div className="px-8 py-6 bg-card border-b border-border">
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start gap-8">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center text-white font-mono text-sm font-bold">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center text-white font-mono text-sm font-bold shrink-0">
                   &gt;_
                 </div>
                 <h1 className="text-2xl font-mono font-bold text-text-primary">{skill.name}</h1>
               </div>
-              <p className="mt-2 text-sm text-text-secondary max-w-2xl">{skill.description}</p>
+              <p className="mt-2 text-sm text-text-secondary">{skill.description}</p>
               <div className="mt-3">
                 <SkillMetadataPills
                   version={skill.metadata?.version}
@@ -61,23 +140,24 @@ export function SkillDetailPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                to={`/skills/${name}/edit`}
-                className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <Pencil className="w-3.5 h-3.5" /> Edit
-              </Link>
-              <button className="flex items-center gap-1.5 px-4 py-2 border border-border text-text-secondary hover:text-text-primary text-sm rounded-lg transition-colors">
-                <Download className="w-3.5 h-3.5" /> Download .skill
-              </button>
-              <div className="w-px h-6 bg-border mx-1" />
-              <button
-                onClick={handleDelete}
-                className="flex items-center gap-1.5 px-3 py-2 text-danger text-sm hover:bg-danger/10 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Delete
-              </button>
+            <div className="w-72 shrink-0 flex items-center justify-end gap-2">
+              {canWrite && (
+                <Link
+                  to={`/skills/${name}/edit`}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Edit
+                </Link>
+              )}
+              <ExportDropdown skillName={name!} />
+              {canWrite && (
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-1.5 px-4 py-2 text-danger text-sm border border-danger/40 hover:bg-danger/10 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -96,38 +176,20 @@ export function SkillDetailPage() {
               <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-3">
                 <Folder className="w-4 h-4" /> File Structure
               </h3>
-              <div className="space-y-1.5 font-mono text-xs">
-                {skill.files
-                  ?.filter((f) => !f.path.endsWith(".gitkeep"))
-                  .map((f) => (
-                    <div key={f.path} className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-text-secondary">
-                        <File className="w-3 h-3" />
-                        <span className="truncate">{f.path}</span>
-                      </div>
-                      <span className="text-text-muted text-[10px]">
-                        {f.size > 1024 ? `${(f.size / 1024).toFixed(1)} KB` : `${f.size} B`}
-                      </span>
-                    </div>
-                  ))}
+              <div className="font-mono text-xs">
+                {sortNodes(
+                  buildTree(skill.files?.filter((f) => !f.path.endsWith(".gitkeep")) ?? [])
+                ).map((node) => (
+                  <ReadOnlyTreeItem key={node.path} node={node} depth={0} />
+                ))}
               </div>
             </div>
 
             {/* Install */}
-            <div className="p-4 bg-card rounded-xl border border-border">
-              <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-3">
-                <Download className="w-4 h-4" /> Install this Skill
-              </h3>
-              <div className="flex items-center gap-2 p-2 bg-surface rounded-lg">
-                <code className="flex-1 text-xs font-mono text-text-secondary truncate">{installCmd}</code>
-                <button onClick={handleCopyInstall} className="shrink-0 p-1 rounded hover:bg-border transition-colors">
-                  {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5 text-text-muted" />}
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-primary hover:underline cursor-pointer">
-                Compatible with 16+ agents via agentskills.io
-              </p>
-            </div>
+            <UseGuide
+              skillName={name!}
+              onExport={() => downloadSkill(name!)}
+            />
 
             {/* Details */}
             <div className="p-4 bg-card rounded-xl border border-border">

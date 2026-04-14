@@ -46,3 +46,13 @@ export interface ValidationResult {
   errors: { field: string; message: string }[];
   warnings: { field: string; message: string }[];
 }
+
+export type UserRole = "SkillAdmin" | "SkillUser";
+
+export interface CurrentUser {
+  oid: string;
+  name: string;
+  email: string;
+  tenant_id: string;
+  roles: UserRole[];
+}

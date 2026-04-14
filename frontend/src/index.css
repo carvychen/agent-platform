@@ -1,23 +1,83 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
-  --color-primary: #3B82F6;
-  --color-primary-hover: #2563EB;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-sidebar: #0F0F1A;
-  --color-sidebar-hover: #1E293B;
-  --color-editor-bg: #1E1E2E;
-  --color-editor-panel: #16162A;
-  --color-editor-topbar: #1B1B2F;
+  --color-primary: #7C9CF5;
+  --color-primary-hover: #6B8DE8;
+  --color-primary-glow: #7C9CF526;
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+  --color-sidebar: #1A1D2E;
+  --color-sidebar-hover: #252940;
+  --color-editor-bg: #242838;
+  --color-editor-panel: #1E2235;
+  --color-editor-topbar: #212538;
+  --color-editor-tab-active: #2A2F44;
   --color-text-primary: #0F0F1A;
   --color-text-secondary: #6B7280;
   --color-text-muted: #9CA3AF;
   --color-border: #E5E7EB;
+  --color-border-subtle: #2E3350;
+  --color-border-accent: #3A3F5C;
   --color-surface: #FAFAFA;
   --color-card: #FFFFFF;
 
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Editor page light styles */
+.editor-tab-bar {
+  background: #F6F8FA;
+}
+
+.editor-status-bar {
+  background: #F6F8FA;
+}
+
+.file-tree-selected {
+  background: linear-gradient(90deg, #7C9CF515 0%, #7C9CF508 100%);
+  border-left: 2px solid #7C9CF5;
+}
+
+.editor-btn-outline {
+  border: 1px solid #E5E7EB;
+  color: #6B7280;
+  transition: all 0.15s ease;
+}
+.editor-btn-outline:hover {
+  border-color: #D1D5DB;
+  color: #0F0F1A;
+  background: #FAFAFA;
+}
+
+.editor-btn-primary {
+  background: #7C9CF5;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(124, 156, 245, 0.3);
+  transition: all 0.15s ease;
+}
+.editor-btn-primary:hover {
+  background: #6B8DE8;
+  box-shadow: 0 2px 8px rgba(124, 156, 245, 0.35);
+}
+.editor-btn-primary:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+/* Dropdown animation */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.dropdown-animate {
+  animation: dropdown-in 0.15s ease-out;
 }

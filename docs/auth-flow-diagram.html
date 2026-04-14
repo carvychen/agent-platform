@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 60px;
+    }
+    h2 {
+      color: #4fc3f7;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+    }
+    .section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .mermaid {
+      background: #1a1a2e;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Part 0: Overview -->
+  <div class="section">
+    <h2>总览：认证与权限全链路</h2>
+    <div class="mermaid">
+sequenceDiagram
+    actor U as 用户
+    participant F as 前端(React)
+    participant A as Azure AD
+    participant B as 后端(FastAPI)
+    participant S as Blob Storage
+
+    U->>F: 点击登录
+    F->>A: MSAL 跳转登录
+    A->>F: 返回 JWT (含 roles)
+    F->>F: 缓存 token
+
+    Note over U,S: 已认证，进入应用
+
+    U->>F: 操作页面
+    F->>F: useRoles() 判断权限，控制 UI 可见性
+    F->>B: API 请求 (Bearer token)
+    B->>A: 获取 JWKS 公钥 (首次)
+    B->>B: 验证 JWT + 检查角色 (Admin / User)
+    B->>S: 读写 Skill 数据
+    S->>B: 返回数据
+    B->>F: 响应结果
+    F->>U: 渲染页面
+    </div>
+  </div>
+
+  <!-- Part 1: Login & Token Acquisition -->
+  <div class="section">
+    <h2>1. 登录与令牌获取</h2>
+    <div class="mermaid">
+sequenceDiagram
+    actor U as 用户
+    participant F as 前端(React + MSAL)
+    participant A as Azure AD
+    participant S as sessionStorage
+
+    U->>F: 1. 点击"登录"
+    F->>A: 2. MSAL loginRedirect (scope: api://{clientId}/Skills.ReadWrite)
+    U->>A: 3. 输入账号密码
+    A->>F: 4. 重定向回前端，携带 auth code
+    F->>A: 5. MSAL handleRedirectPromise() 用 code 换 token
+    A->>F: 6. 返回 ID Token + Access Token (含 roles claim)
+    F->>S: 7. 缓存 token 到 sessionStorage
+    F->>F: 8. 设置 activeAccount，注册 LOGIN_SUCCESS 事件监听
+    </div>
+  </div>
+
+  <!-- Part 2: Token Caching & API Request -->
+  <div class="section">
+    <h2>2. 令牌缓存与 API 请求</h2>
+    <div class="mermaid">
+sequenceDiagram
+    participant F as 前端(Axios 拦截器)
+    participant C as Token 缓存
+    participant M as MSAL
+    participant B as 后端(FastAPI)
+    participant A as Azure AD
+
+    F->>C: 1. 检查缓存 token 是否有效 (>60s 余量)
+    alt 缓存有效
+        C->>F: 2a. 返回缓存 token
+    else 缓存过期或不存在
+        F->>M: 2b. acquireTokenSilent()
+        Note over F,M: 去重机制：并发请求共享同一个 Promise
+        M->>F: 3. 返回新 token，更新缓存
+    end
+    F->>B: 4. 请求 API，Header: Authorization: Bearer {token}
+    </div>
+  </div>
+
+  <!-- Part 3: Backend JWT Validation -->
+  <div class="section">
+    <h2>3. 后端 JWT 验证</h2>
+    <div class="mermaid">
+sequenceDiagram
+    participant B as 后端(FastAPI)
+    participant A as Azure AD JWKS
+    participant D as get_current_user
+
+    B->>B: 1. 从 Authorization header 提取 Bearer token
+    B->>B: 2. jwt.get_unverified_header() 获取 kid
+
+    alt JWKS 未缓存
+        B->>A: 3a. GET /{tenant_id}/discovery/v2.0/keys
+        A->>B: 返回公钥集合 (JWKS)
+        B->>B: 缓存 JWKS（全局变量）
+    else JWKS 已缓存
+        B->>B: 3b. 使用缓存的 JWKS
+    end
+
+    B->>B: 4. 用 kid 匹配公钥
+    B->>B: 5. RS256 验签 + 验证 issuer / audience
+    B->>D: 6. 提取 claims → UserInfo(oid, tenant_id, name, email, roles)
+    </div>
+  </div>
+
+  <!-- Part 4: RBAC -->
+  <div class="section">
+    <h2>4. 角色权限控制 (RBAC)</h2>
+    <div class="mermaid">
+flowchart LR
+    subgraph Roles["Azure AD 角色"]
+        R1["SkillAdmin"]
+        R2["SkillUser"]
+    end
+
+    subgraph Guards["后端 Guard"]
+        G1["require_admin"]
+        G2["require_any_role"]
+    end
+
+    subgraph Write["写操作 (Admin)"]
+        W["POST /skills 创建<br/>POST /skills/import 导入<br/>DELETE /skills 删除<br/>PUT .../files 编辑<br/>DELETE .../files 删文件<br/>POST .../rename 重命名<br/>DELETE .../folders 删文件夹"]
+    end
+
+    subgraph Read["读操作 (Admin+User)"]
+        RO["GET /skills 列表<br/>GET /skills/{name} 详情<br/>GET .../files 读文件<br/>GET .../download 下载<br/>POST .../install-token 安装令牌<br/>POST .../validate 校验"]
+    end
+
+    subgraph Public["公开接口"]
+        P["GET /health<br/>GET .../tar?token=..."]
+    end
+
+    R1 --> G1
+    R1 --> G2
+    R2 --> G2
+    G1 --> W
+    G2 --> RO
+    </div>
+  </div>
+
+  <!-- Part 5: Frontend Role Checking & Route Protection -->
+  <div class="section">
+    <h2>5. 前端权限检查与路由守卫</h2>
+    <div class="mermaid">
+sequenceDiagram
+    participant U as 用户
+    participant F as 前端 Router
+    participant H as useRoles Hook
+    participant B as 后端 /api/me
+
+    U->>F: 1. 进入页面
+    F->>H: 2. 调用 useRoles()
+    H->>B: 3. GET /api/me (React Query, 5min 缓存)
+    B->>H: 4. 返回 { oid, name, email, roles }
+    H->>H: 5. 计算权限: isAdmin / canWrite / canRead
+
+    alt 管理员 (SkillAdmin)
+        H->>F: canWrite=true
+        F->>U: 显示完整 UI（新建/编辑/删除按钮）
+    else 普通用户 (SkillUser)
+        H->>F: canWrite=false, canRead=true
+        F->>U: 只读 UI（隐藏写操作按钮）
+    end
+
+    Note over U,F: 路由级守卫
+    U->>F: 尝试访问 /skills/create 或 /skills/{name}/edit
+    F->>H: 检查 canWrite
+    alt 无权限
+        F->>U: 重定向到 /skills 或 /skills/{name}
+    else 有权限
+        F->>U: 正常渲染页面
+    end
+    </div>
+  </div>
+
+  <!-- Part 6: Install Token Flow -->
+  <div class="section">
+    <h2>6. 安装令牌流程 (Tar 下载)</h2>
+    <div class="mermaid">
+sequenceDiagram
+    participant U as 用户/CLI
+    participant F as 前端
+    participant B as 后端
+
+    U->>F: 1. 点击"安装"
+    F->>B: 2. POST /skills/{name}/install-token (Bearer JWT)
+    B->>B: 3. 生成短期 install token (HMAC-SHA256 签名)
+    B->>F: 4. 返回 { install_token, expires_at, install_url }
+    F->>U: 5. 展示安装命令 (含 token 的 URL)
+    U->>B: 6. GET /skills/{name}/tar?token={install_token}
+    B->>B: 7. 验证 token 签名和有效期 (无需 JWT)
+    B->>U: 8. 返回 .tar.gz 文件流
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#1a1a2e',
+        mainBkg: '#16213e',
+        textColor: '#e0e0e0',
+        lineColor: '#4fc3f7',
+        signalColor: '#4fc3f7',
+        actorBorder: '#4fc3f7',
+        actorBkg: '#0f3460',
+        actorTextColor: '#e0e0e0',
+        noteBkgColor: '#533483',
+        noteTextColor: '#e0e0e0',
+        noteBorderColor: '#7c4dff',
+        activationBorderColor: '#4fc3f7',
+        activationBkgColor: '#16213e',
+        sequenceNumberColor: '#fff',
+        primaryColor: '#0f3460',
+        primaryTextColor: '#e0e0e0',
+        primaryBorderColor: '#4fc3f7',
+        secondaryColor: '#533483',
+        tertiaryColor: '#16213e',
+        nodeTextColor: '#e0e0e0'
+      },
+      sequence: {
+        showSequenceNumbers: false,
+        actorMargin: 80,
+        messageMargin: 40,
+        mirrorActors: false,
+        width: 200,
+        height: 60,
+        useMaxWidth: false
+      },
+      flowchart: {
+        useMaxWidth: false,
+        htmlLabels: true,
+        curve: 'basis',
+        padding: 20,
+        nodeSpacing: 30,
+        rankSpacing: 40
+      }
+    });
+  </script>
+</body>
+</html>

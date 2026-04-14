@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Puzzle, Bot, MessageSquare, Plug, Bell } from "lucide-react";
+import { Puzzle, Bot, MessageSquare, Plug, Bell, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "../../auth/useAuth";
 
 const navItems = [
@@ -11,16 +11,16 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { isAuthenticated, user, login, logout } = useAuth();
 
   return (
-    <aside className="flex flex-col w-16 hover:w-56 transition-all duration-200 bg-sidebar group overflow-hidden shrink-0 h-screen border-r border-white/10">
+    <aside className="flex flex-col w-16 hover:w-56 transition-all duration-200 bg-white group overflow-hidden shrink-0 h-screen border-r border-border">
       {/* Logo */}
       <div className="flex items-center h-12 px-4 mt-2">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
           <Puzzle className="w-4 h-4 text-white" />
         </div>
-        <span className="ml-3 text-white font-semibold text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="ml-3 text-text-primary font-semibold text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
           Agent Platform
         </span>
       </div>
@@ -35,8 +35,8 @@ export function Sidebar() {
               to={item.path}
               className={`flex items-center h-10 rounded-lg px-3 transition-colors ${
                 isActive
-                  ? "bg-sidebar-hover text-white border-l-[3px] border-primary"
-                  : "text-text-muted hover:text-white hover:bg-sidebar-hover"
+                  ? "bg-primary/10 text-primary border-l-[3px] border-primary"
+                  : "text-text-secondary hover:text-text-primary hover:bg-surface"
               }`}
             >
               <item.icon className="w-5 h-5 shrink-0" />
@@ -50,23 +50,45 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="px-2 pb-4 space-y-1">
-        <button className="flex items-center h-10 w-full rounded-lg px-3 text-text-muted hover:text-white hover:bg-sidebar-hover transition-colors">
+        <button className="flex items-center h-10 w-full rounded-lg px-3 text-text-secondary hover:text-text-primary hover:bg-surface transition-colors">
           <Bell className="w-5 h-5 shrink-0" />
           <span className="ml-3 text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
             Notifications
           </span>
         </button>
-        <button
-          onClick={logout}
-          className="flex items-center h-10 w-full rounded-lg px-3 text-text-muted hover:text-white hover:bg-sidebar-hover transition-colors"
-        >
-          <div className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center shrink-0">
-            {user?.name?.charAt(0) || "U"}
-          </div>
-          <span className="ml-3 text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-            {user?.name || "User"}
-          </span>
-        </button>
+        {isAuthenticated ? (
+          <>
+            {/* User info */}
+            <div className="flex items-center h-10 w-full rounded-lg px-3 text-text-secondary">
+              <div className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center shrink-0">
+                {user?.name?.charAt(0) || "U"}
+              </div>
+              <span className="ml-3 text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                {user?.name || "User"}
+              </span>
+            </div>
+            {/* Sign out */}
+            <button
+              onClick={logout}
+              className="flex items-center h-10 w-full rounded-lg px-3 text-text-secondary hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-5 h-5 shrink-0" />
+              <span className="ml-3 text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                Sign out
+              </span>
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={login}
+            className="flex items-center h-10 w-full rounded-lg px-3 text-text-secondary hover:text-text-primary hover:bg-surface transition-colors"
+          >
+            <LogIn className="w-5 h-5 shrink-0" />
+            <span className="ml-3 text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              Sign in
+            </span>
+          </button>
+        )}
       </div>
     </aside>
   );

@@ -5,6 +5,7 @@ import {
   createSkill,
   deleteSkill,
   validateSkill,
+  importSkill,
 } from "../api/skillsApi";
 import type { SkillCreateRequest } from "../types/skill";
 
@@ -42,5 +43,19 @@ export function useDeleteSkill() {
 export function useValidateSkill() {
   return useMutation({
     mutationFn: (name: string) => validateSkill(name),
+  });
+}
+
+export function useImportSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      file,
+      overwrite = false,
+    }: {
+      file: File | Blob;
+      overwrite?: boolean;
+    }) => importSkill(file, overwrite),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["skills"] }),
   });
 }

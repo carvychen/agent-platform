@@ -391,7 +391,6 @@ frontend/
 - [ ] Add upload button to file tree toolbar (next to new file/folder buttons)
 - [ ] Support click-to-upload and drag-and-drop onto the file tree
 - [ ] Read file content, call `writeFile` API to upload
-- [ ] Respect 1 MB size limit — show error for oversized files
 - [ ] Playwright verify: drag a .py file onto file tree — file appears in tree
 
 ### D.7 — Add cursor position to editor status bar
@@ -420,16 +419,7 @@ frontend/
 - [ ] Clicking the anchor updates URL hash for shareable deep links
 - [ ] Playwright verify: hover over a heading — anchor icon appears; click — URL hash updates
 
-### D.10 — Switch Markdown code blocks to dark theme
-
-`frontend/src/components/skills/MarkdownRenderer.tsx`
-
-- [ ] Currently uses `oneLight` theme from `react-syntax-highlighter`
-- [ ] Switch to `oneDark` or `vscDarkPlus` to match editor aesthetic
-- [ ] Ensure code block background and text colors have good contrast
-- [ ] Playwright verify: view SKILL.md with code blocks — dark theme renders correctly
-
-### D.11 — Add unsaved changes warning on navigation
+### D.10 — Add unsaved changes warning on navigation
 
 `frontend/src/pages/skills/SkillEditorPage.tsx`
 
@@ -438,7 +428,7 @@ frontend/
 - [ ] Use React Router's `useBlocker` or `usePrompt` to warn on in-app navigation
 - [ ] Playwright verify: edit a file, click sidebar link — warning dialog appears
 
-### D.12 — Add keyboard shortcuts overlay
+### D.11 — Add keyboard shortcuts overlay
 
 `frontend/src/pages/skills/SkillEditorPage.tsx`
 
@@ -455,16 +445,7 @@ frontend/
 
 **Priority:** Items that improve deployment, testing, and operational readiness.
 
-### E.1 — Add frontend environment configuration
-
-`frontend/.env.example` + `frontend/vite.config.ts`
-
-- [ ] Document all required environment variables in `.env.example`
-- [ ] Ensure `VITE_API_BASE_URL`, `VITE_MSAL_CLIENT_ID`, `VITE_MSAL_AUTHORITY`, `VITE_MSAL_REDIRECT_URI` are configurable
-- [ ] Add `.env.local` to `.gitignore` (if not already)
-- [ ] Verify Vite proxies `/api` to backend in development mode
-
-### E.2 — Add health check and startup validation
+### E.1 — Add health check and startup validation
 
 `backend/app/main.py`
 
@@ -473,7 +454,7 @@ frontend/
 - [ ] Return structured health response: `{"status": "healthy", "blob_storage": "connected"}`
 - [ ] Test: verify health endpoint returns appropriate status
 
-### E.3 — Add structured logging
+### E.2 — Add structured logging
 
 `backend/app/main.py` + service files
 
@@ -482,23 +463,6 @@ frontend/
 - [ ] Include request correlation ID (from header or generated)
 - [ ] Do NOT log tokens, file contents, or PII beyond user OID
 
-### E.4 — Add rate limiting
-
-`backend/app/main.py`
-
-- [ ] Add rate limiting middleware (e.g., `slowapi` or custom)
-- [ ] Limits: 100 req/min for read endpoints, 30 req/min for write endpoints
-- [ ] Higher limits for install-token and validate endpoints
-- [ ] Return 429 with `Retry-After` header when exceeded
-
-### E.5 — Add OpenAPI documentation
-
-`backend/app/main.py` + `backend/app/routers/skills.py`
-
-- [ ] Add response models to all endpoints for proper OpenAPI schema
-- [ ] Add docstrings/descriptions to all endpoints
-- [ ] Configure Swagger UI at `/docs` (FastAPI default, just needs proper models)
-- [ ] Verify generated OpenAPI spec covers all endpoints with correct types
 
 ---
 
@@ -520,7 +484,7 @@ Within each phase, items are roughly ordered by priority/dependency. Items withi
 - **B.1** and **B.2** are both in SkillEditorPage — do them together
 - **C.1** (ProtectedRoute) should be done before D.5 (multi-tab) to avoid auth edge cases
 - **D.5** (multi-tab) and **D.6** (file upload) both modify the editor — coordinate changes
-- **D.11** (unsaved warning) depends on **D.5** (multi-tab) dirty state tracking
+- **D.10** (unsaved warning) depends on **D.5** (multi-tab) dirty state tracking
 
 ---
 

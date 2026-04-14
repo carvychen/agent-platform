@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -11,12 +11,17 @@ security = HTTPBearer()
 
 _jwks_cache: dict | None = None
 
+ROLE_SKILL_ADMIN = "SkillAdmin"
+ROLE_SKILL_USER = "SkillUser"
+
 
 @dataclass
 class UserInfo:
     oid: str
+    tenant_id: str
     name: str
     email: str
+    roles: list[str] = field(default_factory=list)
 
 
 async def _get_jwks() -> dict:
@@ -55,18 +60,29 @@ async def get_current_user(
                 detail="Unable to find appropriate key",
             )
 
+        # Azure AD v2.0 tokens may have audience as "api://<id>" or bare "<id>"
         payload = jwt.decode(
             token,
             rsa_key,
             algorithms=["RS256"],
-            audience=settings.azure_ad_audience,
+            options={"verify_aud": False},
             issuer=f"https://login.microsoftonline.com/{settings.azure_ad_tenant_id}/v2.0",
         )
+        token_aud = payload.get("aud", "")
+        valid_audiences = {settings.azure_ad_audience, settings.azure_ad_client_id}
+        if token_aud not in valid_audiences:
+            raise JWTError(f"Invalid audience: {token_aud}")
+
+        tenant_id = payload.get("tid", "")
+        if not tenant_id:
+            raise JWTError("Missing tenant ID (tid) in token")
 
         return UserInfo(
             oid=payload["oid"],
+            tenant_id=tenant_id,
             name=payload.get("name", ""),
             email=payload.get("preferred_username", ""),
+            roles=payload.get("roles", []),
         )
 
     except JWTError as e:
@@ -74,3 +90,23 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Token validation failed: {e}",
         )
+
+
+def require_role(*allowed_roles: str):
+    """FastAPI dependency factory that checks the user has at least one of the allowed roles."""
+
+    async def _check(
+        user: UserInfo = Depends(get_current_user),
+    ) -> UserInfo:
+        if not any(r in user.roles for r in allowed_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return user
+
+    return _check
+
+
+require_admin = require_role(ROLE_SKILL_ADMIN)
+require_any_role = require_role(ROLE_SKILL_ADMIN, ROLE_SKILL_USER)

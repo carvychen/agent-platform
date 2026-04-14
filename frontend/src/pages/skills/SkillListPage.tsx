@@ -1,17 +1,23 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Upload } from "lucide-react";
 import { TopBar } from "../../components/layout/TopBar";
 import { Breadcrumb } from "../../components/ui/Breadcrumb";
 import { SearchInput } from "../../components/ui/SearchInput";
 import { SkillCard } from "../../components/skills/SkillCard";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { SplitButton } from "../../components/ui/SplitButton";
+import { ImportSkillDialog } from "../../components/skills/ImportSkillDialog";
 import { useSkillList, useDeleteSkill } from "../../hooks/useSkills";
+import { useRoles } from "../../auth/useRoles";
 
 export function SkillListPage() {
   const [search, setSearch] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
   const { data, isLoading } = useSkillList();
   const deleteMutation = useDeleteSkill();
+  const navigate = useNavigate();
+  const { canWrite } = useRoles();
 
   const skills = data?.skills ?? [];
   const filtered = skills.filter(
@@ -35,13 +41,20 @@ export function SkillListPage() {
           </div>
           <div className="flex items-center gap-3">
             <SearchInput value={search} onChange={setSearch} placeholder="Search skills..." />
-            <Link
-              to="/skills/new"
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              New Skill
-            </Link>
+            {canWrite && (
+              <SplitButton
+                primaryLabel="New Skill"
+                primaryIcon={<Plus className="w-4 h-4" />}
+                primaryHref="/skills/new"
+                items={[
+                  {
+                    label: "Import Skill",
+                    icon: <Upload className="w-4 h-4" />,
+                    onClick: () => setImportOpen(true),
+                  },
+                ]}
+              />
+            )}
           </div>
         </div>
 
@@ -55,10 +68,11 @@ export function SkillListPage() {
                 key={skill.name}
                 skill={skill}
                 index={i}
+                canWrite={canWrite}
                 onDelete={(name) => deleteMutation.mutate(name)}
               />
             ))}
-            <EmptyState />
+            {canWrite && <EmptyState />}
           </div>
         )}
 
@@ -69,6 +83,12 @@ export function SkillListPage() {
           </div>
         )}
       </div>
+
+      <ImportSkillDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={(name) => navigate(`/skills/${name}/edit`)}
+      />
     </>
   );
 }

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Terminal, BookOpen, Plug, ArrowRight } from "lucide-react";
+import { FileText, Terminal, BookOpen, Plug, ArrowRight, Folder, File } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { TopBar } from "../../components/layout/TopBar";
 import { Breadcrumb } from "../../components/ui/Breadcrumb";
 import { TemplateCard } from "../../components/skills/TemplateCard";
 import { useCreateSkill } from "../../hooks/useSkills";
+import { useRoles } from "../../auth/useRoles";
 
 const templates = [
   {
@@ -62,8 +63,16 @@ type BasicInfoForm = z.infer<typeof basicInfoSchema>;
 
 export function SkillCreatePage() {
   const navigate = useNavigate();
+  const { canWrite, isLoading: rolesLoading } = useRoles();
   const createMutation = useCreateSkill();
   const [step, setStep] = useState<1 | 2>(1);
+
+  // Redirect non-admin users to skills list
+  useEffect(() => {
+    if (!rolesLoading && !canWrite) {
+      navigate("/skills", { replace: true });
+    }
+  }, [rolesLoading, canWrite, navigate]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("blank");
 
   const {
@@ -84,15 +93,19 @@ export function SkillCreatePage() {
     if (data.author) metadata.author = data.author;
     if (data.version) metadata.version = data.version;
 
-    await createMutation.mutateAsync({
-      name: data.name,
-      description: data.description,
-      template: selectedTemplate as "blank" | "script" | "instruction" | "mcp",
-      license: data.license || undefined,
-      metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-    });
+    try {
+      await createMutation.mutateAsync({
+        name: data.name,
+        description: data.description,
+        template: selectedTemplate as "blank" | "script" | "instruction" | "mcp",
+        license: data.license || undefined,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+      });
 
-    navigate(`/skills/${data.name}/edit`);
+      navigate(`/skills/${data.name}/edit`);
+    } catch {
+      // Error is captured in createMutation.error — displayed in the form
+    }
   };
 
   return (
@@ -150,22 +163,64 @@ export function SkillCreatePage() {
               </div>
             </div>
 
-            {/* Preview panel */}
-            <div className="w-72">
-              <div className="p-4 bg-surface border border-border rounded-xl">
-                <div className="text-xs text-text-muted uppercase tracking-wider mb-3">Preview</div>
-                <pre className="font-mono text-sm text-text-primary leading-relaxed">
-                  {currentTemplate.tree}
-                </pre>
-                <div className="mt-4 text-xs text-text-muted uppercase tracking-wider mb-2">
-                  Generated SKILL.md frontmatter:
+            {/* Preview panel — GitHub-style */}
+            <div className="w-80">
+              <div className="border border-border rounded-lg overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F6F8FA] border-b border-border">
+                  <svg className="w-4 h-4 text-text-secondary" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z" />
+                  </svg>
+                  <span className="text-sm font-semibold text-text-primary">Template structure</span>
                 </div>
-                <pre className="font-mono text-xs bg-editor-bg text-green-400 p-3 rounded-lg leading-relaxed">
-{`---
-name: my-skill
-description: ""
----`}
-                </pre>
+
+                {/* File tree rows */}
+                <div className="divide-y divide-border">
+                  {currentTemplate.tree.split("\n").map((line, i) => {
+                    const trimmed = line.replace(/^\s+/, "");
+                    const isDir = trimmed.endsWith("/");
+                    const name = isDir ? trimmed.slice(0, -1) : trimmed;
+                    const indent = (line.length - line.trimStart().length) / 2;
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-[#F6F8FA] transition-colors"
+                        style={{ paddingLeft: `${16 + indent * 20}px` }}
+                      >
+                        {isDir ? (
+                          <Folder className="w-4 h-4 text-[#54AEFF] shrink-0" />
+                        ) : (
+                          <File className="w-4 h-4 text-text-muted shrink-0" />
+                        )}
+                        <span className={`font-mono text-[13px] ${isDir ? "text-text-primary" : "text-text-primary"}`}>
+                          {name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Frontmatter section — separate card */}
+              <div className="mt-3 border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2 bg-[#F6F8FA] border-b border-border">
+                  <File className="w-3.5 h-3.5 text-text-muted" />
+                  <span className="text-xs font-medium text-text-secondary">SKILL.md</span>
+                  <span className="ml-auto text-[10px] text-text-muted bg-border/60 px-1.5 py-0.5 rounded-full font-medium">frontmatter</span>
+                </div>
+                <div className="bg-white text-sm font-mono leading-relaxed">
+                  {[
+                    { num: 1, text: "---", color: "text-text-muted" },
+                    { num: 2, text: "name: my-skill", color: "" },
+                    { num: 3, text: 'description: ""', color: "" },
+                    { num: 4, text: "---", color: "text-text-muted" },
+                  ].map((line) => (
+                    <div key={line.num} className="flex hover:bg-[#F6F8FA] transition-colors">
+                      <span className="w-10 shrink-0 text-right pr-3 text-xs text-text-muted select-none py-0.5">{line.num}</span>
+                      <span className={`text-[13px] py-0.5 ${line.color || "text-text-primary"}`}>{line.text}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -236,6 +291,14 @@ description: ""
                 </div>
               </div>
             </div>
+
+            {createMutation.isError && (
+              <div className="mt-4 p-3 bg-danger/10 border border-danger/30 rounded-lg text-sm text-danger">
+                {createMutation.error instanceof Error
+                  ? createMutation.error.message
+                  : "Failed to create skill. Please check you are logged in and try again."}
+              </div>
+            )}
 
             <div className="mt-8 flex justify-end gap-3">
               <button type="button" onClick={() => setStep(1)} className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary">
