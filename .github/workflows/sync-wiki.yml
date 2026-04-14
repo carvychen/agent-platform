@@ -1,0 +1,59 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wiki/**'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync wiki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Clone wiki repo (or init if first time)
+          WIKI_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+
+          WIKI_DIR=$(mktemp -d)
+          if git clone "$WIKI_URL" "$WIKI_DIR" 2>/dev/null; then
+            echo "Wiki repo cloned successfully"
+          else
+            echo "Wiki repo does not exist yet, initializing..."
+            cd "$WIKI_DIR"
+            git init
+            git checkout -b master
+            git remote add origin "$WIKI_URL"
+            cd -
+          fi
+
+          # Copy wiki content
+          cp wiki/*.md "$WIKI_DIR/"
+
+          # Check for changes
+          cd "$WIKI_DIR"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No wiki changes detected, skipping push"
+            exit 0
+          fi
+
+          # Commit and push
+          git commit -m "Sync wiki from main branch ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push origin master || git push --set-upstream origin master
+          echo "Wiki synced successfully"
