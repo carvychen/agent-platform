@@ -6,7 +6,7 @@ const navItems = [
   { path: "/skills", icon: Puzzle, label: "Skills" },
   { path: "/agents", icon: Bot, label: "Agents" },
   { path: "/prompts", icon: MessageSquare, label: "Prompts" },
-  { path: "/mcp", icon: Plug, label: "MCP Servers" },
+  { path: "/mcps", icon: Plug, label: "MCP Servers" },
 ];
 
 export function Sidebar() {

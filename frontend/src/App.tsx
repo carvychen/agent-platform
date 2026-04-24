@@ -6,6 +6,7 @@ import { SkillListPage } from "./pages/skills/SkillListPage";
 import { SkillCreatePage } from "./pages/skills/SkillCreatePage";
 import { SkillEditorPage } from "./pages/skills/SkillEditorPage";
 import { SkillDetailPage } from "./pages/skills/SkillDetailPage";
+import { ComingSoonPage } from "./pages/ComingSoonPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,9 @@ export default function App() {
               <Route path="/skills/new" element={<SkillCreatePage />} />
               <Route path="/skills/:name/edit" element={<SkillEditorPage />} />
               <Route path="/skills/:name" element={<SkillDetailPage />} />
+              <Route path="/mcps" element={<ComingSoonPage module="mcps" displayName="MCP" />} />
+              <Route path="/prompts" element={<ComingSoonPage module="prompts" displayName="Prompt" />} />
+              <Route path="/agents" element={<ComingSoonPage module="agents" displayName="Agent" />} />
             </Route>
           </Routes>
         </BrowserRouter>
