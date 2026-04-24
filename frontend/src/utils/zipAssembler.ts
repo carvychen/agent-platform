@@ -55,5 +55,10 @@ export async function assembleZipFromFiles(files: FileList): Promise<Blob> {
   }
 
   const zipped = zipSync(zipData);
-  return new Blob([zipped], { type: "application/zip" });
+  // fflate returns Uint8Array<ArrayBuffer>, but its declarations produce the
+  // broader Uint8Array<ArrayBufferLike> under TS 6.x. BlobPart only accepts
+  // the narrower form, so we narrow explicitly.
+  return new Blob([zipped as Uint8Array<ArrayBuffer>], {
+    type: "application/zip",
+  });
 }
