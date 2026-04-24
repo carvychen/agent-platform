@@ -11,11 +11,11 @@ This service is the admin plane — pure CRUD. Runtime endpoints (`/mcp/*`, `/ap
 | Hub | Status | Location |
 |---|---|---|
 | Skill Hub | **Real CRUD** — 14 endpoints for list / get / create / update / delete / import / export / install-token / validate | `app/skills/` |
-| MCP Hub | 501 Coming Soon stub | `app/mcps/` |
+| MCP Hub | **Real CRUD (partial)** — list + create for external registrations; detail / edit / delete / `.mcp.json` snippet in follow-up slices | `app/mcps/` |
 | Prompt Hub | 501 Coming Soon stub | `app/prompts/` |
 | Agent Hub | 501 Coming Soon stub | `app/agents/` |
 
-Stub hubs return the documented contract from [`app/core/coming_soon.py`](./app/core/coming_soon.py). Real CRUD for each is a future slice per PRD [carvychen/agent-platform#1](https://github.com/carvychen/agent-platform/issues/1).
+Stub hubs return the documented contract from [`app/core/coming_soon.py`](./app/core/coming_soon.py). Real CRUD for the remaining stubs is tracked under PRD [carvychen/agent-platform#1](https://github.com/carvychen/agent-platform/issues/1); MCP Hub's remaining slices live under PRD [#14](https://github.com/carvychen/agent-platform/issues/14) (issues [#16](https://github.com/carvychen/agent-platform/issues/16), [#17](https://github.com/carvychen/agent-platform/issues/17)).
 
 ## Module layout (vertical slicing)
 
@@ -27,7 +27,7 @@ app/
 │   ├── auth/          #   JWT validation + RBAC dependencies
 │   └── coming_soon.py #   501 factory for stub hubs
 ├── skills/            # Skill Hub — router + service + install_token + validator + models
-├── mcps/              # MCP Hub stub (2-line router.py)
+├── mcps/              # MCP Hub — router + McpService (domain) + models; stores JSON via BlobStorageService
 ├── prompts/           # Prompt Hub stub
 ├── agents/            # Agent Hub stub
 └── CONTEXT.md         # admin-plane glossary

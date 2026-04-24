@@ -19,13 +19,13 @@ The admin plane does **not** execute agents, serve MCP tool calls, or call LLMs.
 
 ### The Hub / artifact distinction
 
-**Hub**: the CRUD code in the admin plane. Implemented in a sibling folder under `backend/app/` (e.g. `backend/app/skills/`). Today: Skill Hub is real; MCP / Prompt / Agent Hubs are 501 Coming Soon stubs.
+**Hub**: the CRUD code in the admin plane. Implemented in a sibling folder under `backend/app/` (e.g. `backend/app/skills/`). Today: Skill Hub and MCP Hub are real; Prompt / Agent Hubs are 501 Coming Soon stubs.
 _Avoid_: "module" when you mean "Hub". Reserve "module" for Python packages.
 
 **Skill bundle**: the artifact the Skill Hub manages. A directory containing `SKILL.md` + optional scripts / references / assets, stored in Blob under `{tid}/{bundle-name}/`. Consumed by any MCP-compliant agent host.
 _Avoid_: "the skill module" (conflates bundle with Hub code); "skill package".
 
-**MCP server** (when used in this context): *a registered entry in the MCP Hub* pointing at a deployed MCP server's URL + metadata. The Hub does not host MCP servers at runtime — actual MCP tool calls are served by integrations (e.g., `integrations/crm-agent/`) that external agents connect to directly.
+**MCP server** (when used in this context): *a registered entry in the MCP Hub* pointing at a deployed MCP server's URL + metadata. The Hub does not host MCP servers at runtime — actual MCP tool calls are served by integrations (e.g., `integrations/crm-agent/`) that external agents connect to directly. Stored in Blob under `{tid}/mcps/<name>/metadata.json`; the metadata doc carries `name` / `display_name` / `description` / `endpoint_url` / `transport` / `auth_type` / `source`. The `source` field distinguishes `external` (the only value today — the operator-registered case) from `platform_authored` (reserved for a future slice where the platform deploys an MCP server on the user's behalf).
 
 **Prompt set**: a versioned collection of prompt Markdown files managed by the Prompt Hub. Deferred (501 stub today).
 
@@ -66,7 +66,7 @@ backend/app/<hub>/
 └── (any hub-specific support modules — e.g. skills/install_token.py, skills/validator.py)
 ```
 
-Stub hubs (`mcps/`, `prompts/`, `agents/`) are a 2-line `router.py` that calls `app/core/coming_soon.py`'s factory, which emits a single `GET /api/<hub>` endpoint returning the documented 501 contract:
+Stub hubs (`prompts/`, `agents/`) are a 2-line `router.py` that calls `app/core/coming_soon.py`'s factory, which emits a single `GET /api/<hub>` endpoint returning the documented 501 contract:
 
 ```json
 {
@@ -77,7 +77,11 @@ Stub hubs (`mcps/`, `prompts/`, `agents/`) are a 2-line `router.py` that calls `
 }
 ```
 
-When a hub gets a real implementation (future slice), its `router.py` is replaced wholesale; the factory stays until all three are converted, then gets deleted.
+When a hub gets a real implementation, its `router.py` is replaced wholesale; the factory stays until all remaining stubs are converted, then gets deleted.
+
+### Shared blob helpers
+
+Non-skill hubs (MCP today; future Prompt / Agent) store a single JSON document per artifact rather than a multi-file bundle. `BlobStorageService` (in `app/skills/service.py` — location is historical; a future refactor may promote it to `app/core/`) exposes four generic helpers — `write_json` / `read_json` / `list_names` / `exists` — that each hub's domain service composes. The domain service (e.g. `McpService`) owns path conventions and invariants like `source` / `created_at` / `updated_at`; the blob service stays infrastructure-only. Tests inject an in-memory substitute satisfying the same four-method contract, so hub behavior is exercised without mocking the Azure SDK.
 
 ## Relationships
 

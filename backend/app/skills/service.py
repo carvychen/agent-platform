@@ -1,3 +1,4 @@
+import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -216,6 +217,33 @@ class BlobStorageService:
         except Exception:
             logger.warning("SAS URL generation failed", exc_info=True)
             return []
+
+    # Generic JSON-blob helpers used by non-skill hubs (MCP Hub today; future
+    # Prompt/Agent Hubs will follow the same pattern). Intentionally tenant-
+    # agnostic — callers compose the full path including tenant prefix.
+    def write_json(self, path: str, data: dict) -> None:
+        payload = json.dumps(data).encode("utf-8")
+        self.container_client.get_blob_client(path).upload_blob(payload, overwrite=True)
+
+    def read_json(self, path: str) -> dict | None:
+        try:
+            raw = self.container_client.get_blob_client(path).download_blob().readall()
+        except Exception:
+            return None
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return None
+
+    def list_names(self, prefix: str) -> list[str]:
+        return [b.name for b in self.container_client.list_blobs(name_starts_with=prefix)]
+
+    def exists(self, path: str) -> bool:
+        try:
+            self.container_client.get_blob_client(path).get_blob_properties()
+            return True
+        except Exception:
+            return False
 
     @staticmethod
     def _parse_frontmatter(content: str) -> dict:

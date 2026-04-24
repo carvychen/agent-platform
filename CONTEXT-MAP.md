@@ -33,6 +33,10 @@ Archival note: this directory was migrated from the standalone `carvychen/crm-ag
 - **No shared Python package.** Each side owns its own auth, config, and utility code. The contract (both validate inbound Azure AD JWTs independently per Entra JWKS; each extracts `oid` / `tid` / `upn` / `roles` from verified claims) is documented in [`docs/adr/0001-auth-contract-admin-vs-runtime.md`](./docs/adr/0001-auth-contract-admin-vs-runtime.md).
 - **Per-context ADRs stay in their context.** Root `docs/adr/` holds only cross-cutting decisions. `integrations/crm-agent/docs/adr/` holds integration-specific ADRs (0001–0008, migrated intact).
 
+## Forward-looking shape (not yet implemented)
+
+This map describes today's state — a pure-CRUD admin plane and self-contained integrations. The commitment documented in [`docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md`](./docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md) is that the admin plane evolves into an **authoring + build + deploy pipeline**: each Hub gets a second mode where users write content in the editor, hit "deploy", and the platform generates + deploys a Function App in the tenant's subscription. `integrations/` stays narrow — reserved for hand-coded deployables that the generator can't cover. When reasoning about Hub or `integrations/` scope in new work, read that ADR.
+
 ## Top-level layout
 
 ```
