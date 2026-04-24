@@ -30,6 +30,6 @@ class TestBlobPaths:
         prefix = service._skill_prefix("user-123", "my-skill")
         assert prefix == "user-123/my-skill/"
 
-    def test_build_user_prefix(self, service):
-        prefix = service._user_prefix("user-123")
-        assert prefix == "user-123/"
+    def test_build_tenant_prefix(self, service):
+        prefix = service._tenant_prefix("tenant-123")
+        assert prefix == "tenant-123/"
