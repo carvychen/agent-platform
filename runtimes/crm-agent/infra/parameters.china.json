@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": { "value": "crmagent" },
+    "cloudEnv": { "value": "china" },
+    "dataverseUrl": { "value": "https://REPLACE.crm.dynamics.cn" },
+    "aadAppClientId": { "value": "REPLACE-GUID" },
+    "aadAppTenantId": { "value": "REPLACE-GUID" },
+    "enableReferenceAgent": { "value": true },
+    "llmProvider": { "value": "foundry" },
+    "foundryProjectEndpoint": { "value": "https://REPLACE.services.ai.azure.cn/api/projects/REPLACE" },
+    "foundryModel": { "value": "gpt-4o-mini" }
+  }
+}
