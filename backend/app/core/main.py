@@ -1,9 +1,9 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth.dependencies import get_current_user, UserInfo
-from app.config import settings
-from app.routers.skills import router as skills_router
+from app.core.auth.dependencies import get_current_user, UserInfo
+from app.core.config import settings
+from app.skills.router import router as skills_router
 
 app = FastAPI(title="Agent Platform API", version="0.1.0")
 

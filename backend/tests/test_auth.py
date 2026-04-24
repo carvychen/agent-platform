@@ -1,4 +1,4 @@
-from app.auth.dependencies import get_current_user, UserInfo
+from app.core.auth.dependencies import get_current_user, UserInfo
 
 
 def test_user_info_from_valid_payload(valid_token_payload):

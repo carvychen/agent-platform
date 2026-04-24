@@ -63,7 +63,7 @@ Required variables in `.env`:
 ### Run Backend
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+uvicorn app.core.main:app --reload --port 8000
 ```
 
 Health check: `curl http://localhost:8000/api/health`
@@ -115,7 +115,7 @@ The Vite dev server proxies `/api/*` requests to `http://localhost:8000`.
 
 ```bash
 # Run server
-uvicorn app.main:app --reload --port 8000
+uvicorn app.core.main:app --reload --port 8000
 
 # Run tests
 pytest

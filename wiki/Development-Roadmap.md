@@ -18,13 +18,13 @@ All items block production deployment.
 
 | ID | Issue | File |
 |----|-------|------|
-| A.1 | JWT audience validation bypassed (`verify_aud=False`) | `backend/app/auth/dependencies.py` |
-| A.2 | Path traversal in blob operations (no `../` normalization) | `backend/app/services/blob_storage.py` |
+| A.1 | JWT audience validation bypassed (`verify_aud=False`) | `backend/app/core/auth/dependencies.py` |
+| A.2 | Path traversal in blob operations (no `../` normalization) | `backend/app/skills/service.py` |
 | A.3 | XSS via raw HTML in Markdown (`rehype-raw` enabled) | `frontend/src/components/skills/MarkdownRenderer.tsx` |
-| A.4 | JWKS cache never invalidates (key rotation breaks auth) | `backend/app/auth/dependencies.py` |
-| A.5 | No file upload size limit | `backend/app/models/skill.py` |
-| A.6 | CORS too permissive (`allow_methods=["*"]`) | `backend/app/main.py` |
-| A.7 | Reserved skill names defined but not enforced | `backend/app/routers/skills.py` |
+| A.4 | JWKS cache never invalidates (key rotation breaks auth) | `backend/app/core/auth/dependencies.py` |
+| A.5 | No file upload size limit | `backend/app/skills/models.py` |
+| A.6 | CORS too permissive (`allow_methods=["*"]`) | `backend/app/core/main.py` |
+| A.7 | Reserved skill names defined but not enforced | `backend/app/skills/router.py` |
 
 ## Phase B — Bug Fixes
 

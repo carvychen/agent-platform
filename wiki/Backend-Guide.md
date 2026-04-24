@@ -4,7 +4,7 @@ The backend is a **Python FastAPI** application that serves as the API layer bet
 
 ## Application Entry Point
 
-[`backend/app/main.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/main.py)
+[`backend/app/core/main.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/core/main.py)
 
 The FastAPI app is configured with:
 - **CORS Middleware** — configurable origins via `CORS_ORIGINS` env var, defaults to `["http://localhost:5173"]`
@@ -12,7 +12,7 @@ The FastAPI app is configured with:
 
 ## Configuration
 
-[`backend/app/config.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/config.py)
+[`backend/app/core/config.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/core/config.py)
 
 Uses `pydantic-settings` to load from `.env`:
 
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
 ## Authentication & Authorization
 
-[`backend/app/auth/dependencies.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/auth/dependencies.py)
+[`backend/app/core/auth/dependencies.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/core/auth/dependencies.py)
 
 ### JWT Validation Flow
 
@@ -83,7 +83,7 @@ Extracted from JWT claims:
 
 ### BlobStorageService
 
-[`backend/app/services/blob_storage.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/services/blob_storage.py)
+[`backend/app/skills/service.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/skills/service.py)
 
 The primary data access layer. Uses `DefaultAzureCredential` for authentication.
 
@@ -119,7 +119,7 @@ def parse_skill_md(content: str) -> dict:
 
 ### InstallTokenStore
 
-[`backend/app/services/install_token.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/services/install_token.py)
+[`backend/app/skills/install_token.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/skills/install_token.py)
 
 In-memory token store for unauthenticated tar downloads:
 
@@ -132,7 +132,7 @@ In-memory token store for unauthenticated tar downloads:
 
 ### SkillValidator
 
-[`backend/app/services/skill_validator.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/services/skill_validator.py)
+[`backend/app/skills/validator.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/skills/validator.py)
 
 Validates skill names and SKILL.md frontmatter:
 
@@ -149,7 +149,7 @@ Validates skill names and SKILL.md frontmatter:
 
 ## Data Models
 
-[`backend/app/models/skill.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/models/skill.py)
+[`backend/app/skills/models.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/skills/models.py)
 
 ```python
 class SkillCreateRequest(BaseModel):

@@ -11,7 +11,7 @@ from azure.storage.blob import (
     generate_blob_sas,
 )
 
-from app.config import settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
