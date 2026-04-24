@@ -1,10 +1,10 @@
 # Agent Platform — Admin Backend
 
-FastAPI backend for the Agent Platform **admin plane** — CRUD over the content tenants author (skill bundles, MCP server definitions, prompt sets, agent definitions) that external runtimes consume. See [`../CONTEXT-MAP.md`](../CONTEXT-MAP.md) and [`app/CONTEXT.md`](./app/CONTEXT.md) for terminology, and [`../README.md`](../README.md) for the monorepo overview.
+FastAPI backend for the Agent Platform **admin plane** — CRUD over the content tenants author (skill bundles, MCP server definitions, prompt sets, agent definitions) that external integrations consume. See [`../CONTEXT-MAP.md`](../CONTEXT-MAP.md) and [`app/CONTEXT.md`](./app/CONTEXT.md) for terminology, and [`../README.md`](../README.md) for the monorepo overview.
 
 Artifacts live in Azure Blob Storage with **tenant-level isolation** via the Azure AD `tid` claim. All endpoints are secured via Azure AD (Entra ID) JWT authentication with **App Roles RBAC** (`SkillAdmin` / `SkillUser`).
 
-This service is the admin plane — pure CRUD. Runtime endpoints (`/mcp/*`, `/api/chat`) live in `runtimes/` and do not depend on this backend at startup or request time.
+This service is the admin plane — pure CRUD. Runtime endpoints (`/mcp/*`, `/api/chat`) live in `integrations/` and do not depend on this backend at startup or request time.
 
 ## Hub status
 

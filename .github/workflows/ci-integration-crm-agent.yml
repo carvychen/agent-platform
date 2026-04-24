@@ -1,15 +1,28 @@
-name: CI
+name: CI — integrations/crm-agent
+
+# Runtime-side CI for the CRM MCP server + reference agent deployable.
+# Only runs on PRs that touch this integration's code; admin-plane PRs
+# (backend/, frontend/) do not re-run these tests.
 
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "integrations/crm-agent/**"
+      - ".github/workflows/ci-integration-crm-agent.yml"
   push:
     branches: [main]
+    paths:
+      - "integrations/crm-agent/**"
+      - ".github/workflows/ci-integration-crm-agent.yml"
 
 jobs:
   unit:
     name: Unit tests (mocked)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/crm-agent
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,10 +38,13 @@ jobs:
   integration:
     name: Live integration tests (real tenant)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/crm-agent
     # ADR 0007: PR merges are gated on live tests passing against the author's
     # Azure Global dev tenant. All secrets listed below are required for the
-    # job to pass — see docs/adr/0007-testing-discipline.md for the rationale
-    # and how to provision them.
+    # job to pass — see integrations/crm-agent/docs/adr/0007-testing-discipline.md
+    # for the rationale and how to provision them.
     env:
       # Dataverse + MCP-server tests (same credentials as the legacy demo):
       DATAVERSE_URL: ${{ secrets.DATAVERSE_URL }}
@@ -61,6 +77,9 @@ jobs:
   bicep:
     name: Bicep validation (build + what-if under both clouds)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/crm-agent
     # Always runs `az bicep build` on every PR; runs `az deployment group
     # what-if` against a scratch resource group when the subscription +
     # scratch-RG secrets are configured. Tests themselves skip the what-if
