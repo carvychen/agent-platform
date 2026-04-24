@@ -1,8 +1,39 @@
-# Skills Platform — Backend
+# Agent Platform — Admin Backend
 
-FastAPI backend for the Agent Platform Skills module. Provides RESTful APIs for creating, editing, importing/exporting, and installing AI agent skills following the [agentskills.io](https://agentskills.io) open standard.
+FastAPI backend for the Agent Platform **admin plane** — CRUD over the content tenants author (skill bundles, MCP server definitions, prompt sets, agent definitions) that external runtimes consume. See [`../CONTEXT-MAP.md`](../CONTEXT-MAP.md) and [`app/CONTEXT.md`](./app/CONTEXT.md) for terminology, and [`../README.md`](../README.md) for the monorepo overview.
 
-Skills are stored in Azure Blob Storage with **tenant-level isolation** (via Azure AD `tid` claim). All endpoints are secured via Azure AD (Entra ID) JWT authentication with **App Roles RBAC** (SkillAdmin / SkillUser).
+Artifacts live in Azure Blob Storage with **tenant-level isolation** via the Azure AD `tid` claim. All endpoints are secured via Azure AD (Entra ID) JWT authentication with **App Roles RBAC** (`SkillAdmin` / `SkillUser`).
+
+This service is the admin plane — pure CRUD. Runtime endpoints (`/mcp/*`, `/api/chat`) live in `runtimes/` and do not depend on this backend at startup or request time.
+
+## Hub status
+
+| Hub | Status | Location |
+|---|---|---|
+| Skill Hub | **Real CRUD** — 14 endpoints for list / get / create / update / delete / import / export / install-token / validate | `app/skills/` |
+| MCP Hub | 501 Coming Soon stub | `app/mcps/` |
+| Prompt Hub | 501 Coming Soon stub | `app/prompts/` |
+| Agent Hub | 501 Coming Soon stub | `app/agents/` |
+
+Stub hubs return the documented contract from [`app/core/coming_soon.py`](./app/core/coming_soon.py). Real CRUD for each is a future slice per PRD [carvychen/agent-platform#1](https://github.com/carvychen/agent-platform/issues/1).
+
+## Module layout (vertical slicing)
+
+```
+app/
+├── core/              # shared plumbing — do not import hub-specific code here
+│   ├── main.py        #   FastAPI app factory; mounts all hub routers
+│   ├── config.py      #   pydantic-settings
+│   ├── auth/          #   JWT validation + RBAC dependencies
+│   └── coming_soon.py #   501 factory for stub hubs
+├── skills/            # Skill Hub — router + service + install_token + validator + models
+├── mcps/              # MCP Hub stub (2-line router.py)
+├── prompts/           # Prompt Hub stub
+├── agents/            # Agent Hub stub
+└── CONTEXT.md         # admin-plane glossary
+```
+
+Each hub owns its own router, service, models, and tests. Cross-hub code goes in `core/`. New hubs follow the same pattern — add a sibling folder, wire its router in `core/main.py`.
 
 ## Tech Stack
 
