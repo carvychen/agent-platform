@@ -12,6 +12,21 @@ We deliberately chose **not** to merge. But more importantly, the reasoning shif
 
 ## Decision
 
+### Layer model
+
+Six layers compose the platform under this ADR. Where each layer lives is normative — not historical.
+
+| Layer | Job | Lives in |
+|---|---|---|
+| Authoring | Monaco-style editors for skills, MCP tool code, prompts, agent bindings | `frontend/` |
+| Storage | Tenant-isolated Blob for user content (metadata docs + authored source) | `backend/app/<hub>/` (today) |
+| Build & deploy pipeline | Take user content → generate code → provision Function App in tenant subscription → return URL | `backend/app/deployment/` (does not exist yet; added when MCP-2 lands) |
+| Generated deployables | Per-tenant Function Apps running generated MCP servers / agents | Azure (not Git) |
+| Hand-coded reference deployables | Pre-platform integrations that predate the generator | `integrations/crm-agent/` |
+| Future hand-coded integrations | Domain code the generator can't coherently cover | `integrations/<name>/` |
+
+Center of gravity grows in `backend/app/` (especially once `deployment/` exists). `integrations/` stays small by construction. Generated deployables never enter Git.
+
 ### The admin plane is a build-and-deploy pipeline, not pure CRUD
 
 Every Hub (`skills/`, `mcps/`, `prompts/`, `agents/`) has up to two modes:
@@ -61,3 +76,4 @@ So the crm-agent integration naturally shrinks from "reference runtime" to "hand
 
 - Architectural discussion during PRD [carvychen/agent-platform#14](https://github.com/carvychen/agent-platform/issues/14) (MCP Hub CRUD) and the preceding session where the user clarified the end-state vision (authoring + one-click deploy for both MCP and Agent Hubs, plus playground).
 - Supersedes the implicit "admin plane = CRUD forever, runtimes = self-contained forever" model described in the original [`CONTEXT-MAP.md`](../../CONTEXT-MAP.md). `CONTEXT-MAP.md` is left as-is because its current description is accurate for today's state; this ADR is the forward-looking commitment.
+- Slice ordering that operationalizes this ADR lives in [carvychen/agent-platform#18](https://github.com/carvychen/agent-platform/issues/18) — a working roadmap, not a commitment; it may reorder as the first deploy-pipeline slice teaches us things.
