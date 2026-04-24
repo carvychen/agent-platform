@@ -6,27 +6,32 @@ This monorepo has two contexts with largely disjoint vocabularies. Read the one 
 
 **Lives in**: `backend/` + `frontend/`
 
-**What it is**: a FastAPI + React service where tenants author, edit, version, and install *content* that external runtimes consume. Currently exposes a real **Skill Hub** with CRUD over skill bundles in Azure Blob Storage; **MCP Hub**, **Prompt Hub**, **Agent Hub** exist as 501 Coming Soon stubs today (real CRUD lands in future slices).
+**What it is**: a FastAPI + React service where tenants author, edit, version, and install *content* that external integrations consume. Currently exposes a real **Skill Hub** with CRUD over skill bundles in Azure Blob Storage; **MCP Hub**, **Prompt Hub**, **Agent Hub** exist as 501 Coming Soon stubs today (real CRUD lands in future slices).
 
 The admin plane is **pure CRUD over artifacts**. It does not execute agents, serve MCP tool calls, or call LLMs.
 
 **Glossary**: [`backend/app/CONTEXT.md`](./backend/app/CONTEXT.md)
 
-## `crm-agent-runtime` — the reference runtime
+## `crm-agent-integration` — the CRM MCP-server + reference agent
 
-**Lives in**: `runtimes/crm-agent/`
+**Lives in**: `integrations/crm-agent/`
 
-**What it is**: a production-grade Azure Functions deployment that serves the MCP Streamable HTTP transport (`/mcp/*`) and a reference agent (`/api/chat`) against Lenovo's Dynamics 365 opportunities. Self-contained — ships its own skill bundle, prompts, MCP tools, and agent wiring. Has **zero dependency** on the admin plane at runtime.
+**What it is**: a production-grade Azure Functions deployment that does two things:
 
-Archival note: this directory was migrated from the standalone `carvychen/crm-agent` repository on 2026-04-24 via `git filter-repo --to-subdirectory-filter runtimes/crm-agent` with full history preserved.
+1. **An MCP server** at `/mcp/*` — domain-specific code implementing Dynamics 365 tool calls (OBO to Dataverse, OData queries, RLS-aware list/get/create operations). This half is not generic — every backend system that wants to expose tools via MCP needs its own deployable like this.
+2. **A reference agent** at `/api/chat` — prompt + LLM + tool-call loop. This half *is* generic in shape; it's a template for what the future **Agent Hub** will run once "agents are data" is implemented in the admin plane.
 
-**Glossary**: [`runtimes/crm-agent/docs/CONTEXT.md`](./runtimes/crm-agent/docs/CONTEXT.md)
+Self-contained today — ships its own skill bundle, prompts, MCP tools, and agent wiring. Has **zero dependency** on the admin plane at runtime. When the Agent Hub grows a real inline runner, the `/api/chat` half becomes redundant and can be dropped; the `/mcp` half stays forever.
+
+Archival note: this directory was migrated from the standalone `carvychen/crm-agent` repository on 2026-04-24 via `git filter-repo --to-subdirectory-filter integrations/crm-agent` with full history preserved.
+
+**Glossary**: [`integrations/crm-agent/docs/CONTEXT.md`](./integrations/crm-agent/docs/CONTEXT.md)
 
 ## Architectural invariants (both contexts)
 
-- **Admin plane and runtimes communicate through documented contracts only.** Nothing in `backend/app/` imports from `runtimes/`, and nothing in `runtimes/` imports from `backend/app/`.
+- **Admin plane and integrations communicate through documented contracts only.** Nothing in `backend/app/` imports from `integrations/`, and nothing in `integrations/` imports from `backend/app/`.
 - **No shared Python package.** Each side owns its own auth, config, and utility code. The contract (both validate inbound Azure AD JWTs independently per Entra JWKS; each extracts `oid` / `tid` / `upn` / `roles` from verified claims) is documented in [`docs/adr/0001-auth-contract-admin-vs-runtime.md`](./docs/adr/0001-auth-contract-admin-vs-runtime.md).
-- **Per-context ADRs stay in their context.** Root `docs/adr/` holds only cross-cutting decisions. `runtimes/crm-agent/docs/adr/` holds runtime-specific ADRs (0001–0008, migrated intact).
+- **Per-context ADRs stay in their context.** Root `docs/adr/` holds only cross-cutting decisions. `integrations/crm-agent/docs/adr/` holds integration-specific ADRs (0001–0008, migrated intact).
 
 ## Top-level layout
 
@@ -40,8 +45,8 @@ Archival note: this directory was migrated from the standalone `carvychen/crm-ag
 │       ├── prompts/    Prompt Hub (501 stub)
 │       └── agents/     Agent Hub (501 stub)
 ├── frontend/         # admin-plane React SPA (platform-admin context)
-├── runtimes/
-│   └── crm-agent/    # reference runtime (crm-agent-runtime context)
+├── integrations/      # domain-specific MCP-server deployables (+ optional reference agent)
+│   └── crm-agent/     # Dynamics 365 integration (crm-agent-integration context)
 ├── docs/
 │   └── adr/          # cross-cutting ADRs only
 ├── wiki/             # GitHub Wiki source

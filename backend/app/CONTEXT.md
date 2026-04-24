@@ -1,18 +1,18 @@
 # Admin plane — context + glossary
 
-Scoped to `backend/app/`. See [`../../CONTEXT-MAP.md`](../../CONTEXT-MAP.md) for how this context relates to the `crm-agent-runtime` context.
+Scoped to `backend/app/`. See [`../../CONTEXT-MAP.md`](../../CONTEXT-MAP.md) for how this context relates to the `crm-agent-integration` context.
 
 ## What the admin plane is
 
-A FastAPI service (served by the frontend React SPA) that lets tenants author, edit, version, and install **content** that external runtimes consume. It is a pure CRUD tool over artifacts stored in Azure Blob Storage, with Azure AD authentication and RBAC.
+A FastAPI service (served by the frontend React SPA) that lets tenants author, edit, version, and install **content** that external integrations consume. It is a pure CRUD tool over artifacts stored in Azure Blob Storage, with Azure AD authentication and RBAC.
 
-The admin plane does **not** execute agents, serve MCP tool calls, or call LLMs. Runtimes (see `runtimes/`) do that, self-contained, with zero dependency on this service.
+The admin plane does **not** execute agents, serve MCP tool calls, or call LLMs. Runtimes (see `integrations/`) do that, self-contained, with zero dependency on this service.
 
 ## Invariants
 
 1. **Admin plane is CRUD only.** No runtime endpoints (`/mcp`, `/api/chat`, etc.). If a new feature would make the admin plane "run" anything, it belongs in a runtime.
 2. **Tenant isolation via blob-path prefix.** The authenticated user's `tid` claim becomes the top-level virtual directory in the storage container. No two tenants' artifacts ever share a path.
-3. **No shared Python package with runtimes.** Each side owns its own JWT validation, config loading, and utility code. See [root ADR 0001](../../docs/adr/0001-auth-contract-admin-vs-runtime.md).
+3. **No shared Python package with integrations.** Each side owns its own JWT validation, config loading, and utility code. See [root ADR 0001](../../docs/adr/0001-auth-contract-admin-vs-runtime.md).
 4. **Vertical slicing per Hub.** Each hub lives in its own folder under `app/` and owns its own router, service, models, and tests (`skills/`, `mcps/`, `prompts/`, `agents/`). Cross-hub code goes to `core/`.
 
 ## Language
@@ -25,7 +25,7 @@ _Avoid_: "module" when you mean "Hub". Reserve "module" for Python packages.
 **Skill bundle**: the artifact the Skill Hub manages. A directory containing `SKILL.md` + optional scripts / references / assets, stored in Blob under `{tid}/{bundle-name}/`. Consumed by any MCP-compliant agent host.
 _Avoid_: "the skill module" (conflates bundle with Hub code); "skill package".
 
-**MCP server** (when used in this context): *a registered entry in the MCP Hub* pointing at a deployed MCP server's URL + metadata. The Hub does not host MCP servers at runtime — actual MCP tool calls are served by runtimes (e.g., `runtimes/crm-agent/`) that external agents connect to directly.
+**MCP server** (when used in this context): *a registered entry in the MCP Hub* pointing at a deployed MCP server's URL + metadata. The Hub does not host MCP servers at runtime — actual MCP tool calls are served by integrations (e.g., `integrations/crm-agent/`) that external agents connect to directly.
 
 **Prompt set**: a versioned collection of prompt Markdown files managed by the Prompt Hub. Deferred (501 stub today).
 
@@ -84,10 +84,10 @@ When a hub gets a real implementation (future slice), its `router.py` is replace
 - The **SPA** (`frontend/`) authenticates against **Azure AD** via MSAL; every `/api/*` request carries the validated token.
 - The FastAPI app validates the token against **JWKS**, extracts `tid` / `oid` / `roles`, and injects a `UserInfo` into route handlers via `Depends(get_current_user)`.
 - Each **Hub** scopes its CRUD by `tid`, so `SkillAdmin`s in tenant A cannot see tenant B's artifacts.
-- A **runtime** (e.g. `runtimes/crm-agent/`) is a separate deployment that does not call the admin plane. Artifacts authored in the admin plane *could* later be installed into a runtime via the skill-bundle install-token mechanism, but runtimes today ship with their content baked in.
+- A **runtime** (e.g. `integrations/crm-agent/`) is a separate deployment that does not call the admin plane. Artifacts authored in the admin plane *could* later be installed into a runtime via the skill-bundle install-token mechanism, but integrations today ship with their content baked in.
 
 ## Flagged ambiguities
 
 - **"module"** is overloaded across (a) a Python package (e.g. `app.skills`), (b) a Hub (e.g. "Skill Hub"), (c) the 501 contract's `module` field (string like `"mcps"`). Resolved: use **Hub** for (b), **module** for (a) and (c) — context disambiguates between those two.
 - **"skill"** alone could mean the Hub, the bundle, or the authoring activity. Resolved: prefer **Skill Hub** for the CRUD code, **skill bundle** for the artifact, **authoring a skill** for the activity.
-- **"tenant"** in the admin plane = an **Entra tenant**, identified by `tid`. In `runtimes/crm-agent/`, "tenant" is sometimes used loosely to mean a Dynamics environment. Use `tid` when precision matters.
+- **"tenant"** in the admin plane = an **Entra tenant**, identified by `tid`. In `integrations/crm-agent/`, "tenant" is sometimes used loosely to mean a Dynamics environment. Use `tid` when precision matters.
