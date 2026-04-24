@@ -4,9 +4,9 @@ import { useAuth } from "../../auth/useAuth";
 
 const navItems = [
   { path: "/skills", icon: Puzzle, label: "Skills" },
-  { path: "/agents", icon: Bot, label: "Agents" },
+  { path: "/mcps", icon: Plug, label: "MCP Servers" },
   { path: "/prompts", icon: MessageSquare, label: "Prompts" },
-  { path: "/mcp", icon: Plug, label: "MCP Servers" },
+  { path: "/agents", icon: Bot, label: "Agents" },
 ];
 
 export function Sidebar() {
