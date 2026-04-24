@@ -1,5 +1,5 @@
 import pytest
-from app.services.skill_validator import validate_skill_name, validate_frontmatter
+from app.skills.validator import validate_skill_name, validate_frontmatter
 
 
 class TestValidateSkillName:

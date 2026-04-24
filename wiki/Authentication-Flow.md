@@ -111,7 +111,7 @@ Every API request → Axios interceptor
 
 ### JWT Validation
 
-[`backend/app/auth/dependencies.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/auth/dependencies.py)
+[`backend/app/core/auth/dependencies.py`](https://github.com/carvychen/agent-platform/blob/main/backend/app/core/auth/dependencies.py)
 
 Steps performed on every authenticated request:
 

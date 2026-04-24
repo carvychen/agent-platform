@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.services.blob_storage import BlobStorageService
+from app.skills.service import BlobStorageService
 
 
 @pytest.fixture

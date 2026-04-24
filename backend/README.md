@@ -20,7 +20,7 @@ Skills are stored in Azure Blob Storage with **tenant-level isolation** (via Azu
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11 (pinned; see `.python-version`)
 - Azure subscription with:
   - Storage Account (Blob service enabled)
   - App Registration in Entra ID (with `SkillAdmin` / `SkillUser` App Roles configured)
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your Azure values (see below)
 
-uvicorn app.main:app --reload --port 8000
+uvicorn app.core.main:app --reload --port 8000
 ```
 
 API available at `http://localhost:8000`. Health check: `GET /api/health`.
@@ -175,7 +175,7 @@ pytest tests/ --cov=app --cov-report=term-missing
 
 ```bash
 # Backend with auto-reload
-uvicorn app.main:app --reload --port 8000
+uvicorn app.core.main:app --reload --port 8000
 
 # Frontend dev server (Vite) proxies /api → localhost:8000
 ```

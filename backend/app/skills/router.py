@@ -6,11 +6,11 @@ import zipfile
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 
-from app.auth.dependencies import get_current_user, require_admin, require_any_role, UserInfo
-from app.models.skill import SkillCreateRequest, FileWriteRequest, FileRenameRequest
-from app.services.blob_storage import BlobStorageService
-from app.services.install_token import install_token_store
-from app.services.skill_validator import validate_skill_name, validate_frontmatter
+from app.core.auth.dependencies import get_current_user, require_admin, require_any_role, UserInfo
+from app.skills.models import SkillCreateRequest, FileWriteRequest, FileRenameRequest
+from app.skills.service import BlobStorageService
+from app.skills.install_token import install_token_store
+from app.skills.validator import validate_skill_name, validate_frontmatter
 
 router = APIRouter(prefix="/api/skills", tags=["skills"])
 
