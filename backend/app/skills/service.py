@@ -12,9 +12,12 @@ from azure.storage.blob import (
     generate_blob_sas,
 )
 
+from app.core import blob_layout
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+_SKILL_HUB = "skills"
 
 
 class BlobStorageService:
@@ -29,14 +32,20 @@ class BlobStorageService:
             )
         )
 
+    # Skill-scoped path builders — thin wrappers over app.core.blob_layout so
+    # every Hub-related path convention lives in one place. These still return
+    # legacy skill paths ({tid}/<skill>/...) via the compat shim in
+    # blob_layout._LEGACY_HUBS until issue #35 migrates the data, then #36
+    # removes the shim.
+
     def _tenant_prefix(self, tenant_id: str) -> str:
-        return f"{tenant_id}/"
+        return blob_layout.tenant_prefix(tenant_id)
 
     def _skill_prefix(self, tenant_id: str, skill_name: str) -> str:
-        return f"{tenant_id}/{skill_name}/"
+        return blob_layout.artifact_prefix(tenant_id, _SKILL_HUB, skill_name)
 
     def _blob_path(self, tenant_id: str, skill_name: str, file_path: str) -> str:
-        return f"{tenant_id}/{skill_name}/{file_path}"
+        return blob_layout.file_path(tenant_id, _SKILL_HUB, skill_name, file_path)
 
     def list_skills(self, tenant_id: str) -> list[dict]:
         prefix = self._tenant_prefix(tenant_id)

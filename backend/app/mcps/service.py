@@ -1,6 +1,10 @@
 from datetime import datetime, timezone
 from typing import Protocol
 
+from app.core import blob_layout
+
+_HUB = "mcps"
+
 
 class BlobJsonStore(Protocol):
     def write_json(self, path: str, data: dict) -> None: ...
@@ -12,14 +16,6 @@ class BlobJsonStore(Protocol):
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-def _metadata_path(tenant_id: str, name: str) -> str:
-    return f"{tenant_id}/mcps/{name}/metadata.json"
-
-
-def _tenant_mcps_prefix(tenant_id: str) -> str:
-    return f"{tenant_id}/mcps/"
 
 
 class McpAlreadyExists(Exception):
@@ -40,7 +36,7 @@ class McpService:
         self._store = store
 
     def list(self, tenant_id: str) -> list[dict]:
-        prefix = _tenant_mcps_prefix(tenant_id)
+        prefix = blob_layout.hub_prefix(tenant_id, _HUB)
         docs = []
         for path in sorted(self._store.list_names(prefix)):
             if not path.endswith("/metadata.json"):
@@ -51,7 +47,7 @@ class McpService:
         return docs
 
     def create(self, tenant_id: str, request_data: dict) -> dict:
-        path = _metadata_path(tenant_id, request_data["name"])
+        path = blob_layout.metadata_path(tenant_id, _HUB, request_data["name"])
         if self._store.exists(path):
             raise McpAlreadyExists(request_data["name"])
         now = _now_iso()
@@ -65,13 +61,13 @@ class McpService:
         return doc
 
     def get(self, tenant_id: str, name: str) -> dict:
-        doc = self._store.read_json(_metadata_path(tenant_id, name))
+        doc = self._store.read_json(blob_layout.metadata_path(tenant_id, _HUB, name))
         if doc is None:
             raise McpNotFound(name)
         return doc
 
     def update(self, tenant_id: str, name: str, patch: dict) -> dict:
-        path = _metadata_path(tenant_id, name)
+        path = blob_layout.metadata_path(tenant_id, _HUB, name)
         existing = self._store.read_json(path)
         if existing is None:
             raise McpNotFound(name)
@@ -87,7 +83,7 @@ class McpService:
         return updated
 
     def delete(self, tenant_id: str, name: str) -> None:
-        path = _metadata_path(tenant_id, name)
+        path = blob_layout.metadata_path(tenant_id, _HUB, name)
         if not self._store.exists(path):
             raise McpNotFound(name)
         self._store.delete(path)
