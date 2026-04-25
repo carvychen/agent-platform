@@ -11,7 +11,7 @@ Development happens in Azure Global (author's personal subscription, no access t
 ## Consequences
 
 - **No preview features.** MCP extension, Flex Consumption in regions not yet GA in China, Entra preview flows are all off-limits regardless of their availability in Global.
-- **Every cloud-specific value is parameterised.** See `src/config.py` for the authoritative list: authority, Dataverse suffix, FIC audience, LLM endpoint, Log Analytics endpoint.
+- **Every cloud-specific value is parameterised.** See `src/shared/config.py` for the authoritative list: authority, Dataverse suffix, FIC audience, LLM endpoint, Log Analytics endpoint.
 - **CI must render both cloud configurations.** `bicep what-if` runs with `CLOUD_ENV=global` and `CLOUD_ENV=china` as a pre-merge check.
 - **Pre-flight script is mandatory.** `scripts/preflight.py` verifies endpoint reachability, AAD / FIC configuration, and Dataverse application-user setup on the target cloud before any real deployment. This is how we compensate for not having access.
 - **Error messages explicitly mention both clouds** where the failure mode differs (e.g. FIC audience mismatch, authority mismatch).

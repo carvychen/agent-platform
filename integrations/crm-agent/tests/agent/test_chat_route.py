@@ -56,7 +56,7 @@ def _parse_sse(body: bytes) -> list:
 
 async def test_chat_route_streams_openai_compatible_sse(tmp_path: Path):
     """POST /api/chat → SSE chunks with AF update text → [DONE]."""
-    from asgi import create_asgi_app
+    from shared.asgi import create_asgi_app
     from mcp_server import ServerDeps
 
     class _NullAuth:
@@ -105,7 +105,7 @@ async def test_chat_route_streams_openai_compatible_sse(tmp_path: Path):
 
 async def test_chat_route_absent_when_reference_agent_disabled():
     """When agent=None (ENABLE_REFERENCE_AGENT=false), POST /api/chat returns 404."""
-    from asgi import create_asgi_app
+    from shared.asgi import create_asgi_app
     from mcp_server import ServerDeps
 
     class _NullAuth:

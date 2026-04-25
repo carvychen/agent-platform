@@ -32,7 +32,7 @@ def _registered_routes(app: func.FunctionApp) -> list[str]:
 
 
 def test_flex_asgi_drops_leading_slash():
-    from flex_asgi import FlexAsgiFunctionApp
+    from shared.flex_asgi import FlexAsgiFunctionApp
 
     app = FlexAsgiFunctionApp(app=_noop_asgi, http_auth_level=func.AuthLevel.ANONYMOUS)
 

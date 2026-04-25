@@ -16,7 +16,7 @@ CONTACTS_URL = f"{DATAVERSE_URL}/api/data/v9.2/contacts"
 
 async def test_list_opportunities_sends_default_select_and_auth_header():
     """Default call hits /opportunities with the documented $select and bearer token."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     with respx.mock() as router:
         route = router.get(OPPS_URL).mock(
@@ -50,7 +50,7 @@ async def test_list_opportunities_sends_default_select_and_auth_header():
 
 async def test_list_opportunities_maps_formatted_values_to_public_shape():
     """Raw Dataverse record (with FormattedValue annotations) → human-friendly dict."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     fv = "OData.Community.Display.V1.FormattedValue"
     raw = {
@@ -94,7 +94,7 @@ async def test_list_opportunities_maps_formatted_values_to_public_shape():
 
 async def test_get_opportunity_returns_formatted_single_record():
     """GET /opportunities({id}) returns the public-shape dict for one record."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     opp_id = "aaaa1111-bbbb-cccc-dddd-eeee22223333"
     raw = {
@@ -134,7 +134,7 @@ async def test_get_opportunity_returns_formatted_single_record():
 
 async def test_create_opportunity_with_account_customer_uses_account_binding():
     """customer_type='account' emits customerid_account@odata.bind, not contact."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     new_id = "11111111-aaaa-bbbb-cccc-111111111111"
     with respx.mock() as router:
@@ -175,7 +175,7 @@ async def test_create_opportunity_with_account_customer_uses_account_binding():
 
 async def test_create_opportunity_with_contact_customer_uses_contact_binding():
     """customer_type='contact' emits customerid_contact@odata.bind, not account."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     new_id = "33333333-cccc-dddd-eeee-333333333333"
     with respx.mock() as router:
@@ -202,7 +202,7 @@ async def test_create_opportunity_with_contact_customer_uses_contact_binding():
 
 
 async def test_create_opportunity_rejects_unknown_customer_type():
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     async with httpx.AsyncClient() as http:
         client = OpportunityClient(DATAVERSE_URL, http=http)
@@ -220,7 +220,7 @@ async def test_create_opportunity_rejects_unknown_customer_type():
 
 async def test_update_opportunity_patches_only_supplied_fields():
     """PATCH only ships keys the caller set — never clobbers unspecified fields."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     opp_id = "aaaa1111-bbbb-cccc-dddd-eeee22223333"
     with respx.mock() as router:
@@ -243,7 +243,7 @@ async def test_update_opportunity_patches_only_supplied_fields():
 
 
 async def test_update_opportunity_accepts_multiple_fields():
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     opp_id = "aaaa1111-bbbb-cccc-dddd-eeee22223333"
     with respx.mock() as router:
@@ -270,7 +270,7 @@ async def test_update_opportunity_accepts_multiple_fields():
 
 
 async def test_search_accounts_uses_contains_filter_and_returns_id_name_pairs():
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     with respx.mock() as router:
         route = router.get(ACCOUNTS_URL).mock(
@@ -307,7 +307,7 @@ async def test_search_accounts_uses_contains_filter_and_returns_id_name_pairs():
 async def test_search_accounts_escapes_single_quotes_in_query():
     """OData string literals use '' to escape a single quote. A query containing
     an apostrophe must not break the filter or allow injection."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     with respx.mock() as router:
         route = router.get(ACCOUNTS_URL).mock(
@@ -323,7 +323,7 @@ async def test_search_accounts_escapes_single_quotes_in_query():
 
 
 async def test_search_accounts_returns_empty_list_when_no_match():
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     with respx.mock() as router:
         router.get(ACCOUNTS_URL).mock(
@@ -339,7 +339,7 @@ async def test_search_accounts_returns_empty_list_when_no_match():
 
 async def test_search_contacts_uses_fullname_field():
     """Contacts are identified by `fullname`, not `name` — Dataverse schema."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     with respx.mock() as router:
         route = router.get(CONTACTS_URL).mock(
@@ -364,7 +364,7 @@ async def test_search_contacts_uses_fullname_field():
 
 
 async def test_delete_opportunity_sends_delete_to_record_url():
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     opp_id = "aaaa1111-bbbb-cccc-dddd-eeee22223333"
     with respx.mock() as router:
@@ -383,7 +383,7 @@ async def test_delete_opportunity_sends_delete_to_record_url():
 
 async def test_list_opportunities_passes_filter_top_orderby():
     """Caller-supplied filter/top/orderby must land on the OData request as-is."""
-    from dataverse_client import OpportunityClient
+    from shared.dataverse_client import OpportunityClient
 
     with respx.mock() as router:
         route = router.get(OPPS_URL).mock(

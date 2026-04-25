@@ -15,7 +15,7 @@ from httpx import ASGITransport
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-from config import CloudConfig
+from shared.config import CloudConfig
 
 
 DATAVERSE_URL = "https://orgtest.crm.dynamics.com"
@@ -77,9 +77,9 @@ def _backend_mock_handler(token_calls: list[dict], dv_calls: list[dict]):
 async def test_end_to_end_list_opportunities_over_http():
     import json as stdjson
 
-    from asgi import create_asgi_app
-    from auth import DataverseAuth
-    from dataverse_client import OpportunityClient
+    from shared.asgi import create_asgi_app
+    from shared.auth import DataverseAuth
+    from shared.dataverse_client import OpportunityClient
     from mcp_server import ServerDeps
 
     token_calls: list[dict] = []

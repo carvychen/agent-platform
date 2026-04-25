@@ -10,7 +10,7 @@ import httpx
 import pytest
 import respx
 
-from config import CloudConfig
+from shared.config import CloudConfig
 
 
 def _global_config() -> CloudConfig:
@@ -25,7 +25,7 @@ def _global_config() -> CloudConfig:
 
 async def test_get_dataverse_token_performs_obo_request_with_correct_payload():
     """OBO exchange POSTs the right form fields and returns the Dataverse access token."""
-    from auth import DataverseAuth
+    from shared.auth import DataverseAuth
 
     config = _global_config()
 
@@ -62,7 +62,7 @@ async def test_get_dataverse_token_performs_obo_request_with_correct_payload():
 
 async def test_get_dataverse_token_caches_within_ttl():
     """Second call for the same user within TTL must be served from cache (no re-exchange)."""
-    from auth import DataverseAuth
+    from shared.auth import DataverseAuth
 
     config = _global_config()
 
@@ -93,7 +93,7 @@ async def test_get_dataverse_token_caches_within_ttl():
 
 async def test_get_dataverse_token_refreshes_after_expiry():
     """Once the cached token is past its expiry, the next call re-exchanges."""
-    from auth import DataverseAuth
+    from shared.auth import DataverseAuth
 
     config = _global_config()
 
@@ -129,7 +129,7 @@ async def test_get_dataverse_token_refreshes_after_expiry():
 async def test_client_secret_auth_uses_client_credentials_flow_and_ignores_user_jwt():
     """AUTH_MODE=app_only_secret path (ADR 0007) runs client_credentials and
     returns an app-only Dataverse token; it ignores any inbound user JWT."""
-    from auth import ClientSecretDataverseAuth
+    from shared.auth import ClientSecretDataverseAuth
 
     config = _global_config()
 
@@ -184,8 +184,8 @@ async def test_obo_request_uses_per_cloud_authority_and_audience(
     is the load-bearing proof that the CN authority host and FIC audience
     both wire correctly into the outbound request shape.
     """
-    from auth import DataverseAuth
-    from config import CloudConfig
+    from shared.auth import DataverseAuth
+    from shared.config import CloudConfig
 
     config = CloudConfig(
         authority=expected_authority,
@@ -223,7 +223,7 @@ async def test_obo_request_uses_per_cloud_authority_and_audience(
 
 def test_build_auth_dispatches_by_auth_mode(monkeypatch):
     """build_auth reads AUTH_MODE and returns the right implementation."""
-    from auth import (
+    from shared.auth import (
         ClientSecretDataverseAuth,
         DataverseAuth,
         UnsupportedAuthModeError,

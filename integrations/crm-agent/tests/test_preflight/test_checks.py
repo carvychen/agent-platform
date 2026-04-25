@@ -12,7 +12,7 @@ import respx
 
 
 async def test_dns_check_passes_when_every_host_resolves(monkeypatch):
-    from preflight.checks import DnsReachabilityCheck
+    from shared.preflight.checks import DnsReachabilityCheck
 
     resolved: list[str] = []
 
@@ -34,7 +34,7 @@ async def test_dns_check_passes_when_every_host_resolves(monkeypatch):
 
 
 async def test_dns_check_fails_when_any_host_unresolvable():
-    from preflight.checks import DnsReachabilityCheck
+    from shared.preflight.checks import DnsReachabilityCheck
 
     def _fake_resolve(host: str) -> str:
         if host == "broken":
@@ -57,7 +57,7 @@ async def test_dns_check_fails_when_any_host_unresolvable():
 async def test_dns_check_reports_each_unresolvable_host():
     """Partial failure: one host OK, one host broken — remediation lists the
     broken one so the operator doesn't chase the wrong problem."""
-    from preflight.checks import DnsReachabilityCheck
+    from shared.preflight.checks import DnsReachabilityCheck
 
     def _fake_resolve(host: str) -> str:
         if "fail" in host:
@@ -81,7 +81,7 @@ async def test_dns_check_reports_each_unresolvable_host():
 async def test_token_check_passes_when_client_credentials_returns_access_token(
     monkeypatch,
 ):
-    from preflight.checks import TokenAcquisitionCheck
+    from shared.preflight.checks import TokenAcquisitionCheck
 
     fake_access_token = "secret-jwt-value-DO-NOT-LEAK-42"
     with respx.mock() as router:
@@ -112,7 +112,7 @@ async def test_token_check_passes_when_client_credentials_returns_access_token(
 
 
 async def test_token_check_fails_with_remediation_on_401():
-    from preflight.checks import TokenAcquisitionCheck
+    from shared.preflight.checks import TokenAcquisitionCheck
 
     with respx.mock() as router:
         router.post(
@@ -149,7 +149,7 @@ async def test_token_check_fails_with_remediation_on_401():
 
 
 async def test_whoami_check_passes_when_dataverse_returns_user_id():
-    from preflight.checks import WhoAmICheck
+    from shared.preflight.checks import WhoAmICheck
 
     with respx.mock() as router:
         router.get("https://orgtest.crm.example/api/data/v9.2/WhoAmI").mock(
@@ -179,7 +179,7 @@ async def test_whoami_check_passes_when_dataverse_returns_user_id():
 
 
 async def test_foundry_check_skips_when_agent_disabled():
-    from preflight.checks import FoundryReachabilityCheck
+    from shared.preflight.checks import FoundryReachabilityCheck
 
     check = FoundryReachabilityCheck(
         agent_enabled=False,
@@ -194,7 +194,7 @@ async def test_foundry_check_skips_when_agent_disabled():
 
 
 async def test_foundry_check_fails_when_no_endpoint_but_agent_enabled():
-    from preflight.checks import FoundryReachabilityCheck
+    from shared.preflight.checks import FoundryReachabilityCheck
 
     check = FoundryReachabilityCheck(
         agent_enabled=True,
@@ -211,7 +211,7 @@ async def test_foundry_check_fails_when_no_endpoint_but_agent_enabled():
 async def test_foundry_check_passes_when_probe_returns_output(monkeypatch):
     """The check runs a tiny AF agent.run('ping') against Foundry and
     asserts the agent returns a non-empty text response."""
-    from preflight.checks import FoundryReachabilityCheck
+    from shared.preflight.checks import FoundryReachabilityCheck
 
     class _FakeAgent:
         async def run(self, messages):
@@ -237,7 +237,7 @@ async def test_foundry_check_passes_when_probe_returns_output(monkeypatch):
 
 
 async def test_foundry_check_fails_when_probe_raises():
-    from preflight.checks import FoundryReachabilityCheck
+    from shared.preflight.checks import FoundryReachabilityCheck
 
     class _BrokenAgent:
         async def run(self, messages):
@@ -264,7 +264,7 @@ async def test_foundry_check_fails_when_probe_raises():
 
 
 async def test_whoami_check_fails_with_remediation_on_403():
-    from preflight.checks import WhoAmICheck
+    from shared.preflight.checks import WhoAmICheck
 
     with respx.mock() as router:
         router.get("https://orgtest.crm.example/api/data/v9.2/WhoAmI").mock(

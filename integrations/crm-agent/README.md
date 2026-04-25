@@ -32,18 +32,34 @@ See `docs/CONTEXT.md` for the full glossary and project invariants, `docs/adr/` 
 
 ## Current state
 
-The repo lands capability slice by slice (tracked in GitHub issues #3–#12). The legacy monolithic demo (`agent.py` + `skills/crm-opportunity/`) still runs unchanged alongside the layered reference implementation.
+The repo lands capability slice by slice (tracked in GitHub issues #3–#12). A standalone CLI demo at `scripts/agent_demo.py` runs independently of the Function-App-hosted reference implementation and shares the same `skills/crm-opportunity/` bundle.
+
+### Layout
+
+```
+integrations/crm-agent/
+├── function_app.py           # Azure Functions routing entry
+├── src/
+│   ├── mcp_server/           # MCP server (code in __init__.py)
+│   ├── agent/                # reference agent (builder, route, prompts)
+│   └── shared/               # auth, config, dataverse_client, asgi, flex_asgi, preflight
+├── skills/crm-opportunity/   # embedded skill bundle (SKILL.md + scripts + assets)
+├── scripts/                  # utility + demo scripts (preflight, agent_demo, example)
+├── docs/                     # integration-specific ADRs + glossary
+├── infra/                    # Bicep for the Function App
+└── tests/
+```
 
 Merged to `main`:
 
-- **Slice 1 (#3) — MCP server walking skeleton.** `src/config.py`, `src/auth.py`, `src/dataverse_client.py`, `src/mcp_server.py`, `src/asgi.py` — cloud-neutral config, OBO-over-WIF, OData client, MCP Server + Streamable HTTP. Azure Functions v2 entry in `function_app.py`.
+- **Slice 1 (#3) — MCP server walking skeleton.** `src/shared/config.py`, `src/shared/auth.py`, `src/shared/dataverse_client.py`, `src/mcp_server/__init__.py`, `src/shared/asgi.py` — cloud-neutral config, OBO-over-WIF, OData client, MCP Server + Streamable HTTP. Azure Functions v2 entry in `function_app.py`.
 - **Slice 2 (#4) — Reference agent walking skeleton.** `src/agent/{prompts,builder,route}.py` — `agent_framework.Agent` + `FoundryChatClient` + `MCPStreamableHTTPTool`, `POST /api/chat` as SSE, `ContextVar`-scoped user JWT propagated into the MCP tool via `header_provider`. Gated by `ENABLE_REFERENCE_AGENT`.
 - **Slices 3–5 — hardening, multi-cloud parity, runbooks.** Config fail-loud, `CLOUD_ENV={global,china}` wiring (ADR 0003), deployment runbooks under `docs/deployment/`.
 - **Slice 6 (#23) — LLM provider dispatch.** `LLM_PROVIDER={foundry,azure-openai-global,azure-openai-cn,custom}` with a per-provider prompt module.
 - **Slice 7 (#22) — skill bundle rewrite.** `skills/crm-opportunity/` is now an MCP consumer (framework-neutral), not a credentialed script.
 - **Slice 10 (#21) — runbooks.** Four operator-facing guides (`aad-setup`, `dataverse-setup`, `bicep-deploy`, `preflight`) and the troubleshooting table under `docs/operations/`.
 - **Slice 11 (#24) — delivery rehearsal.** A second-operator dry-run of the whole Slice 5+ runbook on a fresh Azure tenant. Log + findings: [`docs/deployment/rehearsal-global.md`](./docs/deployment/rehearsal-global.md). Seven runbook bugs found and fixed; two deploy-auth bugs (UAMI client-id resolution on Flex, OBO error surfacing) fixed in code. AC3 proved: full teardown + rebuild in ~7 min wall-clock on the patched runbook. AC2 intentionally scoped: cross-tenant FIC is not supported (ADR 0001 — OBO + WIF is a same-tenant architectural pattern); the rehearsal hit that boundary at `AADSTS700236` and confirmed it is an Entra policy enforcement, not code or config.
-- **Slice 12 (#26) — Flex Consumption + identity-based storage (ADR 0008).** Removes the last long-lived secret (`AzureWebJobsStorage` shared-key connection string) in favour of UAMI + data-role RBAC; works around the `azure-functions` SDK leading-slash routing bug via `src/flex_asgi.FlexAsgiFunctionApp`.
+- **Slice 12 (#26) — Flex Consumption + identity-based storage (ADR 0008).** Removes the last long-lived secret (`AzureWebJobsStorage` shared-key connection string) in favour of UAMI + data-role RBAC; works around the `azure-functions` SDK leading-slash routing bug via `src/shared/flex_asgi.FlexAsgiFunctionApp`.
 
 ## Prerequisites (new stack)
 
@@ -112,19 +128,19 @@ Then: `LLM_PROVIDER=custom` + `CUSTOM_LLM_CLIENT_FACTORY=your_org.llm.qwen:make_
 
 Prompts that need to change per provider go under `src/agent/prompts/providers/{provider}.md` — the `PromptLoader` appends them to the base system prompt automatically when the matching provider is active (ADR 0006 / ADR 0005).
 
-## Legacy demo (unchanged until later slices)
+## Standalone CLI demo (`scripts/agent_demo.py`)
 
-The original Microsoft Agent Framework demo still lives at the repo root:
+A self-contained Microsoft Agent Framework demo that runs the same CRM skill bundle without the Function App wrapper — useful for local experiments:
 
 ```bash
 .venv/bin/pip install -r requirements.txt agent-framework==1.0.1   # extra dep not in the slim Slice 1 pin
-python agent.py
+python scripts/agent_demo.py
 ```
 
 | Variable | Description |
 |---|---|
 | `FOUNDRY_PROJECT_ENDPOINT` | Azure AI Foundry project endpoint |
 | `FOUNDRY_MODEL` | Model deployment (default `gpt-4o-mini`) |
-| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Dataverse creds (client-secret flow — to be eliminated by Slice 7) |
+| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Dataverse creds (client-secret flow) |
 
-The skill bundle at `skills/crm-opportunity/` is rewritten in Slice 7 (#9) to drop credentials and Python scripts in favour of the MCP server.
+The skill bundle at `skills/crm-opportunity/` is an MCP consumer (rewritten in Slice 7 (#9) to drop credentials and Python scripts in favour of the MCP server).

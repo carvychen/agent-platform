@@ -26,11 +26,11 @@ import azure.functions as func  # noqa: E402
 import httpx  # noqa: E402
 from azure.identity import DefaultAzureCredential  # noqa: E402
 
-from asgi import create_asgi_app  # noqa: E402
-from auth import build_auth  # noqa: E402
-from config import get_config  # noqa: E402
-from dataverse_client import OpportunityClient  # noqa: E402
-from flex_asgi import FlexAsgiFunctionApp  # noqa: E402
+from shared.asgi import create_asgi_app  # noqa: E402
+from shared.auth import build_auth  # noqa: E402
+from shared.config import get_config  # noqa: E402
+from shared.dataverse_client import OpportunityClient  # noqa: E402
+from shared.flex_asgi import FlexAsgiFunctionApp  # noqa: E402
 from mcp_server import ServerDeps  # noqa: E402
 
 
