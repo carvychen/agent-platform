@@ -8,6 +8,8 @@ import { SkillEditorPage } from "./pages/skills/SkillEditorPage";
 import { SkillDetailPage } from "./pages/skills/SkillDetailPage";
 import { McpListPage } from "./pages/mcps/McpListPage";
 import { McpCreatePage } from "./pages/mcps/McpCreatePage";
+import { McpDetailPage } from "./pages/mcps/McpDetailPage";
+import { McpEditPage } from "./pages/mcps/McpEditPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 
 const queryClient = new QueryClient({
@@ -30,6 +32,8 @@ export default function App() {
               <Route path="/skills/:name" element={<SkillDetailPage />} />
               <Route path="/mcps" element={<McpListPage />} />
               <Route path="/mcps/new" element={<McpCreatePage />} />
+              <Route path="/mcps/:name/edit" element={<McpEditPage />} />
+              <Route path="/mcps/:name" element={<McpDetailPage />} />
               <Route path="/prompts" element={<ComingSoonPage module="prompts" displayName="Prompt" />} />
               <Route path="/agents" element={<ComingSoonPage module="agents" displayName="Agent" />} />
             </Route>
