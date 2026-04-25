@@ -11,7 +11,7 @@ The admin plane does **not** execute agents, serve MCP tool calls, or call LLMs.
 ## Invariants
 
 1. **Admin plane is CRUD only.** No runtime endpoints (`/mcp`, `/api/chat`, etc.). If a new feature would make the admin plane "run" anything, it belongs in a runtime.
-2. **Tenant isolation via blob-path prefix.** The authenticated user's `tid` claim becomes the top-level virtual directory in the storage container. No two tenants' artifacts ever share a path.
+2. **Tenant isolation via blob-path prefix.** The authenticated user's `tid` claim becomes the top-level virtual directory in the storage container. No two tenants' artifacts ever share a path. The target layout is **symmetric per Hub**: `{tid}/<hub>/<artifact-name>/...` (e.g. `{tid}/mcps/my-mcp/metadata.json`, `{tid}/skills/crm-opportunity/SKILL.md`). Skills currently live at the legacy shape `{tid}/<skill-name>/...` pending the cutover tracked in PRD #31; the compat shim lives in `app.core.blob_layout._LEGACY_HUBS`.
 3. **No shared Python package with integrations.** Each side owns its own JWT validation, config loading, and utility code. See [root ADR 0001](../../docs/adr/0001-auth-contract-admin-vs-runtime.md).
 4. **Vertical slicing per Hub.** Each hub lives in its own folder under `app/` and owns its own router, service, models, and tests (`skills/`, `mcps/`, `prompts/`, `agents/`). Cross-hub code goes to `core/`.
 
@@ -81,7 +81,9 @@ When a hub gets a real implementation, its `router.py` is replaced wholesale; th
 
 ### Shared blob helpers
 
-Non-skill hubs (MCP today; future Prompt / Agent) store a single JSON document per artifact rather than a multi-file bundle. `BlobStorageService` (in `app/skills/service.py` — location is historical; a future refactor may promote it to `app/core/`) exposes five generic helpers — `write_json` / `read_json` / `list_names` / `exists` / `delete` — that each hub's domain service composes. The domain service (e.g. `McpService`) owns path conventions and invariants like `source` / `created_at` / `updated_at`; the blob service stays infrastructure-only. Tests inject an in-memory substitute satisfying the same five-method contract, so hub behavior is exercised without mocking the Azure SDK.
+Non-skill hubs (MCP today; future Prompt / Agent) store a single JSON document per artifact rather than a multi-file bundle. `BlobStorageService` (in `app/skills/service.py` — location is historical; a future refactor may promote it to `app/core/`) exposes five generic helpers — `write_json` / `read_json` / `list_names` / `exists` / `delete` — that each hub's domain service composes. The domain service (e.g. `McpService`) owns `source` / `created_at` / `updated_at` invariants; the blob service stays infrastructure-only. Tests inject an in-memory substitute satisfying the same five-method contract, so hub behavior is exercised without mocking the Azure SDK.
+
+**Path conventions** (what goes where in the container) live separately in `app.core.blob_layout` — a pure module exposing `tenant_prefix` / `hub_prefix` / `artifact_prefix` / `metadata_path` / `file_path`. Both `BlobStorageService` (Skill Hub) and `McpService` compose it; no path is reconstructed inline anywhere. Future Hubs follow the same pattern by calling `blob_layout` with their hub name.
 
 ## Relationships
 
