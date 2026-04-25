@@ -1,4 +1,4 @@
-# Admin plane is a build-and-deploy pipeline; `integrations/` stays for hand-coded deployables
+# Admin plane is a build-and-deploy pipeline; `integrations/` is for hand-coded deployables
 
 At the time `carvychen/crm-agent` was merged into this monorepo, `integrations/crm-agent/` did two jobs under one roof: it hosted an **MCP server** (Dataverse OBO, OData queries, RLS-aware list/get/create) and a **reference agent** (prompt + LLM + tool-call loop at `/api/chat`). The `CONTEXT-MAP.md` described this as the runtime side of the platform, opposite the admin plane's pure CRUD. The temptation to collapse the boundary — "runtimes are small, the admin plane is growing, just merge them" — kept coming up.
 
@@ -14,7 +14,7 @@ We deliberately chose **not** to merge. But more importantly, the reasoning shif
 
 ### Layer model
 
-Six layers compose the platform under this ADR. Where each layer lives is normative — not historical.
+Five layers compose the platform under this ADR. Where each layer lives is normative — not historical.
 
 | Layer | Job | Lives in |
 |---|---|---|
@@ -22,10 +22,9 @@ Six layers compose the platform under this ADR. Where each layer lives is normat
 | Storage | Tenant-isolated Blob for user content (metadata docs + authored source) | `backend/app/<hub>/` (today) |
 | Build & deploy pipeline | Take user content → generate code → provision Function App in tenant subscription → return URL | `backend/app/deployment/` (does not exist yet; added when MCP-2 lands) |
 | Generated deployables | Per-tenant Function Apps running generated MCP servers / agents | Azure (not Git) |
-| Hand-coded reference deployables | Pre-platform integrations that predate the generator | `integrations/crm-agent/` |
-| Future hand-coded integrations | Domain code the generator can't coherently cover | `integrations/<name>/` |
+| Hand-coded integration deployables | Domain code that's kept hand-coded rather than generator-authored | `integrations/<name>/` (crm-agent is the first) |
 
-Center of gravity grows in `backend/app/` (especially once `deployment/` exists). `integrations/` stays small by construction. Generated deployables never enter Git.
+Center of gravity grows in `backend/app/` (especially once `deployment/` exists). `integrations/` is small by construction. Generated deployables never enter Git.
 
 ### The admin plane is a build-and-deploy pipeline, not pure CRUD
 
@@ -40,37 +39,24 @@ The Agent Hub's terminal form (PRD-still-to-be-written, likely late this year) c
 
 ### `integrations/` exists for hand-coded deployables only
 
-Two legitimate reasons for a directory under `integrations/`:
-
-1. **Legacy** — code that predates the build pipeline. `integrations/crm-agent/` is the canonical example: it was written as a standalone repo, got absorbed via `git filter-repo`, and now lives here with its history intact.
-2. **Too bespoke for the generator** — domain code that can't be expressed as "pick these tools + paste this prompt + deploy" without an ugly pile of escape hatches. CRM's OBO flow with per-tenant Dataverse URLs and OData-shaped queries might stay here even after Agent Hub's deploy pipeline exists, because generating it would require more platform knobs than hand-coding it.
+A directory under `integrations/` is for domain code that's kept hand-coded rather than generator-authored — when "pick these tools + paste this prompt + deploy" can't express the integration without a pile of configuration escape hatches. CRM's OBO flow, with per-tenant Dataverse URLs, OData-shaped queries, and RLS-aware read patterns, is an example where hand-coding is strictly simpler than bending a generator to cover it.
 
 Specifically: generated deployables from mode #2 do **not** land in `integrations/`. They live in the tenant's Azure subscription as Function Apps, with source only in the Hub's metadata (the prompt, the tool functions, the binding list) — not in Git. That's the point: the source of truth for a platform-authored agent is the Hub, not a repo.
-
-### The crm-agent integration's long-term shape
-
-`integrations/crm-agent/` currently has both halves (MCP + reference agent at `/api/chat`). When Agent Hub's deploy pipeline exists:
-
-- The **MCP half** stays. It's domain-specific enough that expressing it as "generate an MCP server from these tool functions" either (a) doesn't fit the generator cleanly, or (b) if it does, becomes a good test case that Agent Hub's binding model works against a real MCP. Either way, the MCP server stays as hand-coded reference code.
-- The **`/api/chat` half** becomes redundant. It exists today because no Agent Hub runtime exists. Once the platform can take an agent definition + deploy it, the reference `/api/chat` is superseded and can be dropped.
-
-So the crm-agent integration naturally shrinks from "reference runtime" to "hand-coded MCP server for Dynamics 365". That's the correct terminal state.
 
 ### Decision rules for future slices
 
 1. **Hub data model**: every Hub carries `source` (or equivalent discriminator) from its first real CRUD slice, with a Literal union pre-seeding the platform-authored value even when only `external` is accepted. No schema migrations between "external CRUD" and "platform-authored + deploy" slices.
 2. **Deploy pipeline ownership**: the build + deploy pipeline lives under `backend/app/` (new `deployment/` module when the first slice lands), not inside any individual Hub. It's shared infrastructure.
 3. **New `integrations/<name>/`**: only accepted when no viable generator path exists. Adding one is a signal that the generator needs extending or that the domain is genuinely outside the pattern. Reviewers should push back on "just add another integration" when the thing being added could plausibly be generated.
-4. **Each integration keeps its own ADRs + tests**: `integrations/<name>/docs/adr/` stays authoritative for that integration's local decisions. Root `docs/adr/` is for decisions that span both planes (auth contract, this ADR, any future ones that shape Hub behavior or the build pipeline).
+4. **Each integration keeps its own ADRs + tests**: `integrations/<name>/docs/adr/` is authoritative for that integration's local decisions. Root `docs/adr/` is for decisions that span both planes (auth contract, this ADR, any future ones that shape Hub behavior or the build pipeline).
 
 ## Consequences
 
 - **Slice planning has two PRD families per Hub.** "CRUD" (metadata-only) and "one-click deploy" (authoring + generating + deploying). MCP-1 (PRD #14) is the first. Each CRUD PRD is relatively small; each deploy PRD is load-bearing architectural work.
 - **MCP-2's design will set a template.** It's the first time we build the deploy pipeline. Once that exists, Agent-2 mostly reuses the pattern — so the MCP-2 PRD deserves more design rigour than subsequent deploy PRDs.
 - **`integrations/` center of gravity is bounded by design.** It starts with crm-agent and grows only when something genuinely can't be generated. The admin plane's `backend/app/` is the directory that grows with the business.
-- **Cross-cutting ADRs stay load-bearing.** This document is the "why the structure is what it is" anchor. When somebody in 2027 wonders why `integrations/` is still there after Agent Hub deploy shipped, they read this.
+- **Cross-cutting ADRs stay load-bearing.** This document is the "why the structure is what it is" anchor. When somebody in 2027 wonders why `integrations/` exists alongside the Agent Hub deploy pipeline, they read this.
 - **Role vocabulary rename (`SkillAdmin` → `PlatformAdmin` etc.) is a separate concern.** The legacy name persists across every Hub and across this ADR for now. Renaming is cross-Hub refactor scope and unrelated to the build-pipeline decision.
-- **No rush to rename `/api/chat`.** It stays as-is until Agent Hub deploy exists; then `integrations/crm-agent/` gets pruned to the MCP half and `/api/chat` goes.
 
 ## Source
 

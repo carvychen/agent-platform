@@ -19,9 +19,9 @@ The admin plane is **pure CRUD over artifacts**. It does not execute agents, ser
 **What it is**: a production-grade Azure Functions deployment that does two things:
 
 1. **An MCP server** at `/mcp/*` — domain-specific code implementing Dynamics 365 tool calls (OBO to Dataverse, OData queries, RLS-aware list/get/create operations). This half is not generic — every backend system that wants to expose tools via MCP needs its own deployable like this.
-2. **A reference agent** at `/api/chat` — prompt + LLM + tool-call loop. This half *is* generic in shape; it's a template for what the future **Agent Hub** will run once "agents are data" is implemented in the admin plane.
+2. **A reference agent** at `/api/chat` — prompt + LLM + tool-call loop. This half wires the MCP server into a callable HTTP endpoint using the same pattern (prompt + tool calls + LLM loop) any agent running against this MCP server would follow.
 
-Self-contained today — ships its own skill bundle, prompts, MCP tools, and agent wiring. Has **zero dependency** on the admin plane at runtime. When the Agent Hub grows a real inline runner, the `/api/chat` half becomes redundant and can be dropped; the `/mcp` half stays forever.
+Self-contained — ships its own skill bundle, prompts, MCP tools, and agent wiring. Has **zero dependency** on the admin plane at runtime. This is a hand-coded integration that runs independently of the admin plane, per [ADR 0002](./docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md).
 
 Archival note: this directory was migrated from the standalone `carvychen/crm-agent` repository on 2026-04-24 via `git filter-repo --to-subdirectory-filter integrations/crm-agent` with full history preserved.
 
@@ -35,7 +35,7 @@ Archival note: this directory was migrated from the standalone `carvychen/crm-ag
 
 ## Forward-looking shape (not yet implemented)
 
-This map describes today's state — a pure-CRUD admin plane and self-contained integrations. The commitment documented in [`docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md`](./docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md) is that the admin plane evolves into an **authoring + build + deploy pipeline**: each Hub gets a second mode where users write content in the editor, hit "deploy", and the platform generates + deploys a Function App in the tenant's subscription. `integrations/` stays narrow — reserved for hand-coded deployables that the generator can't cover. When reasoning about Hub or `integrations/` scope in new work, read that ADR.
+This map describes today's state — a pure-CRUD admin plane and self-contained integrations. The commitment documented in [`docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md`](./docs/adr/0002-admin-plane-as-build-and-deploy-pipeline.md) is that the admin plane evolves into an **authoring + build + deploy pipeline**: each Hub gets a second mode where users write content in the editor, hit "deploy", and the platform generates + deploys a Function App in the tenant's subscription. `integrations/` is narrow — reserved for hand-coded deployables that the generator can't cover. When reasoning about Hub or `integrations/` scope in new work, read that ADR.
 
 ## Top-level layout
 
