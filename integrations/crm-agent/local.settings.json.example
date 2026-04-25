@@ -1,0 +1,26 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+
+    "CLOUD_ENV": "global",
+    "DATAVERSE_URL": "https://org7339c4fb.crm.dynamics.com",
+    "AAD_APP_CLIENT_ID": "",
+    "AAD_APP_TENANT_ID": "",
+
+    "AUTH_MODE": "app_only_secret",
+    "AZURE_CLIENT_SECRET": "",
+
+    "ENABLE_AGENT": "true",
+    "LLM_PROVIDER": "foundry",
+    "FOUNDRY_PROJECT_ENDPOINT": "",
+    "FOUNDRY_MODEL": "gpt-4o-mini",
+
+    "MCP_SERVER_URL": "http://localhost:7071/mcp"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*"
+  }
+}

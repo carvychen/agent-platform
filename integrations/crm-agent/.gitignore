@@ -3,6 +3,9 @@
 .DS_Store
 __pycache__/
 *.pyc
+# Azure Functions local dev settings — contains tenant-specific values and
+# potentially secrets. Only `local.settings.json.example` is committed.
+local.settings.json
 # `az bicep build` output — build artifact, never committed
 infra/*.json
 !infra/parameters.*.json
