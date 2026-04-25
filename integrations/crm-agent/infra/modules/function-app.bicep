@@ -29,7 +29,7 @@ param managedIdentityClientId string
 param appInsightsConnectionString string
 
 @description('Whether to mount the /api/chat agent route and provision its env vars.')
-param enableReferenceAgent bool
+param enableAgent bool
 
 @description('All environment variables the runtime reads — cloud-neutral keys, populated per-cloud by the parameter file.')
 param runtimeAppSettings object
@@ -152,8 +152,8 @@ var baseAppSettings = [
     value: 'Production'  // function_app.py enforces AUTH_MODE=obo under this flag
   }
   {
-    name: 'ENABLE_REFERENCE_AGENT'
-    value: string(enableReferenceAgent)
+    name: 'ENABLE_AGENT'
+    value: string(enableAgent)
   }
 ]
 

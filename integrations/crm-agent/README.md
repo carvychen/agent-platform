@@ -3,8 +3,8 @@
 Four independent deliverables for managing Dynamics 365 opportunities at Lenovo:
 
 - **MCP server** — Azure Functions HTTP endpoint exposing CRM tools via Model Context Protocol. Consumable by any MCP-compliant client.
-- **Reference agent** — production-grade LLM + tool-calling runtime; calls the MCP server over HTTP like any external agent.
-- **Prompt module** — the reference agent's behaviour prompts as Markdown files.
+- **Agent** — production-grade LLM + tool-calling runtime; calls the MCP server over HTTP like any external agent.
+- **Prompt module** — the agent's behaviour prompts as Markdown files.
 - **Skill bundle** — agent-neutral SOP + `.mcp.json` pointer that any MCP-aware agent can consume.
 
 See `docs/CONTEXT.md` for the full glossary and project invariants, `docs/adr/` for architectural decisions, and `PRD issue #2` for the full roadmap.
@@ -41,10 +41,10 @@ integrations/crm-agent/
 ├── function_app.py           # Azure Functions routing entry
 ├── src/
 │   ├── mcp_server/           # MCP server (code in __init__.py)
-│   ├── agent/                # reference agent (builder, route, prompts)
+│   ├── agent/                # agent (builder, route, prompts)
 │   └── shared/               # auth, config, dataverse_client, asgi, flex_asgi, preflight
 ├── skills/crm-opportunity/   # embedded skill bundle (SKILL.md + scripts + assets)
-├── scripts/                  # utility + demo scripts (preflight, agent_demo, example)
+├── scripts/                  # utility + demo scripts (preflight, agent_demo)
 ├── docs/                     # integration-specific ADRs + glossary
 ├── infra/                    # Bicep for the Function App
 └── tests/
@@ -53,7 +53,7 @@ integrations/crm-agent/
 Merged to `main`:
 
 - **Slice 1 (#3) — MCP server walking skeleton.** `src/shared/config.py`, `src/shared/auth.py`, `src/shared/dataverse_client.py`, `src/mcp_server/__init__.py`, `src/shared/asgi.py` — cloud-neutral config, OBO-over-WIF, OData client, MCP Server + Streamable HTTP. Azure Functions v2 entry in `function_app.py`.
-- **Slice 2 (#4) — Reference agent walking skeleton.** `src/agent/{prompts,builder,route}.py` — `agent_framework.Agent` + `FoundryChatClient` + `MCPStreamableHTTPTool`, `POST /api/chat` as SSE, `ContextVar`-scoped user JWT propagated into the MCP tool via `header_provider`. Gated by `ENABLE_REFERENCE_AGENT`.
+- **Slice 2 (#4) — Agent walking skeleton.** `src/agent/{prompts,builder,route}.py` — `agent_framework.Agent` + `FoundryChatClient` + `MCPStreamableHTTPTool`, `POST /api/chat` as SSE, `ContextVar`-scoped user JWT propagated into the MCP tool via `header_provider`. Gated by `ENABLE_AGENT`.
 - **Slices 3–5 — hardening, multi-cloud parity, runbooks.** Config fail-loud, `CLOUD_ENV={global,china}` wiring (ADR 0003), deployment runbooks under `docs/deployment/`.
 - **Slice 6 (#23) — LLM provider dispatch.** `LLM_PROVIDER={foundry,azure-openai-global,azure-openai-cn,custom}` with a per-provider prompt module.
 - **Slice 7 (#22) — skill bundle rewrite.** `skills/crm-opportunity/` is now an MCP consumer (framework-neutral), not a credentialed script.
@@ -89,11 +89,11 @@ All cloud-specific values are driven by `CLOUD_ENV` so that shipping to Azure Ch
 | `AAD_APP_TENANT_ID` | Yes | Tenant ID of the AAD app |
 | `MANAGED_IDENTITY_CLIENT_ID` | No | Specify when multiple MIs are attached |
 
-## Environment variables (reference agent)
+## Environment variables (agent)
 
 | Variable | Required | Description |
 |---|---|---|
-| `ENABLE_REFERENCE_AGENT` | No (default `true`) | `false` skips the `/api/chat` route entirely |
+| `ENABLE_AGENT` | No (default `true`) | `false` skips the `/api/chat` route entirely |
 | `LLM_PROVIDER` | No (default `foundry`) | `foundry` / `azure-openai-global` / `azure-openai-cn` / `custom` |
 | `FOUNDRY_PROJECT_ENDPOINT` | If `LLM_PROVIDER=foundry` | Foundry project base URL |
 | `FOUNDRY_MODEL` | No (default `gpt-4o-mini`) | Deployment name |

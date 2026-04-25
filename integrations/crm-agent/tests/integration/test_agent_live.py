@@ -1,4 +1,4 @@
-"""Live-integration: the full reference-agent stack end-to-end.
+"""Live-integration: the full agent stack end-to-end.
 
 `POST /api/chat` (real HTTP) → AF `Agent.run(stream=True)` → real Foundry
 → AF decides to call `list_opportunities` → AF's `MCPStreamableHTTPTool`

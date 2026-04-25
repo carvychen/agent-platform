@@ -1,4 +1,4 @@
-"""Tests for POST /api/chat — AF-based reference agent SSE entry point."""
+"""Tests for POST /api/chat — AF-based agent SSE entry point."""
 from __future__ import annotations
 
 import json
@@ -103,8 +103,8 @@ async def test_chat_route_streams_openai_compatible_sse(tmp_path: Path):
     assert fake_agent.calls[0]["stream"] is True
 
 
-async def test_chat_route_absent_when_reference_agent_disabled():
-    """When agent=None (ENABLE_REFERENCE_AGENT=false), POST /api/chat returns 404."""
+async def test_chat_route_absent_when_agent_disabled():
+    """When agent=None (ENABLE_AGENT=false), POST /api/chat returns 404."""
     from shared.asgi import create_asgi_app
     from mcp_server import ServerDeps
 

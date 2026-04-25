@@ -1,12 +1,12 @@
-# Prompts as file-based module inside the reference agent
+# Prompts as file-based module inside the agent
 
-Agent-behavior prompts — system prompt, safety rules, few-shot examples, error-recovery phrasing — change frequently, are often authored by non-engineers (PM, sales ops, compliance), and may need per-LLM-provider variants. They live as Markdown files in `src/agent/prompts/` and are loaded at runtime, not embedded as Python string literals. The module is scoped to the reference agent: prompts are tightly coupled to a specific agent's orchestration loop and tool-call dialect, so they do not cross-cut and do not become a top-level deliverable.
+Agent-behavior prompts — system prompt, safety rules, few-shot examples, error-recovery phrasing — change frequently, are often authored by non-engineers (PM, sales ops, compliance), and may need per-LLM-provider variants. They live as Markdown files in `src/agent/prompts/` and are loaded at runtime, not embedded as Python string literals. The module is scoped to the agent: prompts are tightly coupled to a specific agent's orchestration loop and tool-call dialect, so they do not cross-cut and do not become a top-level deliverable.
 
 ## Considered Options
 
 - **Inline Python strings** — simplest, but blocks non-engineer editing, defeats prompt-eval workflows, and makes localisation awkward.
 - **Prompt variants inside each LLM provider class** — keeps providers self-contained, but fragments prompt content across Python files and loses the editorial goal. Rejected.
-- **Top-level `prompts/` deliverable, parallel to skill / MCP / agent** — rejected. Agent-behavior prompts depend on the reference agent's tool-call format and orchestration assumptions; they do not stand alone for external agents.
+- **Top-level `prompts/` deliverable, parallel to skill / MCP / agent** — rejected. Agent-behavior prompts depend on the agent's tool-call format and orchestration assumptions; they do not stand alone for external agents.
 - **Templating engine (Jinja, Handlebars)** — rejected. Introducing code into prompts defeats the editorial-access goal; simple `{variable}` string substitution is the permitted ceiling.
 
 ## Consequences

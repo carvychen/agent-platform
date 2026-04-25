@@ -213,7 +213,7 @@ class WhoAmICheck:
 class FoundryReachabilityCheck:
     """Probe the Foundry chat completions endpoint with a trivial 1-token call.
 
-    Skipped cleanly when `ENABLE_REFERENCE_AGENT=false` — MCP-only deployments
+    Skipped cleanly when `ENABLE_AGENT=false` — MCP-only deployments
     don't need a working LLM. When enabled but misconfigured, the remediation
     names the three most common failure modes (wrong tenant for the SP, no
     Cognitive Services User role assignment, wrong deployment name) so the
@@ -232,7 +232,7 @@ class FoundryReachabilityCheck:
             return CheckResult(
                 name=self.name,
                 status="skip",
-                detail="ENABLE_REFERENCE_AGENT=false — MCP-only deployment",
+                detail="ENABLE_AGENT=false — MCP-only deployment",
             )
         if not self.project_endpoint:
             return CheckResult(

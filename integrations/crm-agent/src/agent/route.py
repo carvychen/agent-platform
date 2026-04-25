@@ -21,7 +21,7 @@ from agent.builder import current_user_jwt
 
 try:
     from agent_framework import Content, Message  # type: ignore  # noqa: F401
-except ImportError:  # pragma: no cover — AF absent when ENABLE_REFERENCE_AGENT=false
+except ImportError:  # pragma: no cover — AF absent when ENABLE_AGENT=false
     Content = Message = None  # type: ignore
 
 
@@ -99,7 +99,7 @@ def _to_agent_framework_messages(payload: list[dict]) -> list:
     if Message is None or Content is None:
         raise RuntimeError(
             "agent_framework is required to handle /api/chat but is not importable; "
-            "this code path should be unreachable when ENABLE_REFERENCE_AGENT=false."
+            "this code path should be unreachable when ENABLE_AGENT=false."
         )
     messages = []
     for raw in payload:

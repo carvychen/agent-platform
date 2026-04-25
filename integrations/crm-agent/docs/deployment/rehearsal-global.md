@@ -228,7 +228,7 @@ After Flex redeploy + FIC re-wire + zip-deploy:
 
 ```bash
 MCP_SERVER_URL=https://crmagent-fn.azurewebsites.net/mcp \
-ENABLE_REFERENCE_AGENT=true \
+ENABLE_AGENT=true \
 LLM_PROVIDER=foundry \
 CLOUD_ENV=global \
 python scripts/preflight.py
@@ -474,7 +474,7 @@ Ran preflight against the **rebuilt** Function App with no code changes since St
 
 ```
 $ MCP_SERVER_URL=https://crmagent-fn.azurewebsites.net/mcp \
-    ENABLE_REFERENCE_AGENT=true LLM_PROVIDER=foundry CLOUD_ENV=global \
+    ENABLE_AGENT=true LLM_PROVIDER=foundry CLOUD_ENV=global \
     .venv/bin/python scripts/preflight.py
 ✓ dns-reachability             pass resolved 3 host(s): login.microsoftonline.com, org6b70bca2.crm.dynamics.com, ai-account-j2thabfiwahuu.services.ai.azure.com
 ✓ token-acquisition            pass Entra issued a Dataverse-scoped access token

@@ -11,7 +11,7 @@
 | `crm-agent-alert-http-5xx` | 2 | Any 5xx in 5m |
 | `crm-agent-alert-p95-latency` | 3 | p95 > 10s for 5m (over 15m window) |
 | `crm-agent-alert-auth-failure` | 2 | > 5 requests with HTTP 401 in 5m |
-| `crm-agent-alert-chat-4xx` | 2 | > 3 requests to `/api/chat` with 4xx in 10m (only if `ENABLE_REFERENCE_AGENT=true`) |
+| `crm-agent-alert-chat-4xx` | 2 | > 3 requests to `/api/chat` with 4xx in 10m (only if `ENABLE_AGENT=true`) |
 
 All alerts fire to the optional action group passed in as a Bicep parameter. If none is set, alerts stay visible in Monitor but don't page — intentional so the stack comes up without a blocking dependency on ticketing / PagerDuty integration.
 

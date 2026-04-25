@@ -1,6 +1,6 @@
 # CRM Agent Platform — Reference Implementation
 
-Three independent, production-grade deliverables for managing Dynamics 365 opportunities at Lenovo: an **MCP server** exposing CRM tools, a **reference agent** that orchestrates LLM + tool calls over them, and a **skill bundle** that tells any agent how to use them. Each stands alone; they compose by choice, not by coupling.
+Three independent, production-grade deliverables for managing Dynamics 365 opportunities at Lenovo: an **MCP server** exposing CRM tools, an **agent** that orchestrates LLM + tool calls over them, and a **skill bundle** that tells any agent how to use them. Each stands alone; they compose by choice, not by coupling.
 
 ## Project origin
 
@@ -11,11 +11,11 @@ A working demo already exists: a Microsoft Agent Framework agent that injects a 
 These rules hold across every decision, PR, and ADR. If a proposed change conflicts with an invariant, the invariant wins.
 
 1. **Layers are independently deployable and evolvable.** The four layers — **skill bundle**, **MCP server**, **agent**, and any future **orchestrator** — communicate only through documented contracts (MCP protocol, HTTP endpoints, `.mcp.json`). No layer may reach into another's internals, and no layer may hide a dependency on a sibling.
-   - The **MCP server** works for any MCP-compliant client — reference agent, VS Code, Claude Desktop, Copilot Studio, a customer-built agent or orchestrator.
+   - The **MCP server** works for any MCP-compliant client — this repo's agent, VS Code, Claude Desktop, Copilot Studio, a customer-built agent, or an orchestrator.
    - The **skill bundle** carries SOP + `.mcp.json` only and works with any MCP-compliant agent.
-   - The **reference agent** talks to the MCP server over the same HTTP + MCP protocol an external agent would use (see [ADR 0004](./adr/0004-http-mcp-transport-for-reference-agent.md)).
+   - The **agent** talks to the MCP server over the same HTTP + MCP protocol an external agent would use (see [ADR 0004](./adr/0004-http-mcp-transport-for-agent.md)).
    - A future **multi-agent orchestrator** MUST compose agents through these same contracts rather than coupling them.
-2. **The reference agent is production-grade.** It is a complete agent runtime, not a demo or stub — if Lenovo chooses to run it in production, it must meet the same quality bar as the MCP server. Its optionality is at *deployment time*, not in *build quality*.
+2. **The agent is production-grade.** It is a complete agent runtime, not a demo or stub — if Lenovo chooses to run it in production, it must meet the same quality bar as the MCP server. Its optionality is at *deployment time*, not in *build quality*.
 3. **Code is cloud-neutral.** All cloud-specific endpoints, authorities, audiences, and LLM providers are configured via environment variables. No `dynamics.com` / `dynamics.cn` (or equivalent) literals in source.
 4. **Delivered blind.** The project assumes its authors have no access to the customer's target environment. Every failure mode must be diagnosable from the shipped runbook, error messages, and pre-flight script.
 
@@ -27,24 +27,24 @@ These rules hold across every decision, PR, and ADR. If a proposed change confli
 The HTTP endpoint exposing opportunity/account/contact tools via Model Context Protocol. Independent deliverable — consumable by any MCP client.
 _Avoid_: "API", "backend", "tool server".
 
-**Reference agent** (or just "agent"):
+**Agent** (or just "agent"):
 The agent runtime shipped in this repo. Receives user chat turns, calls an LLM, routes tool calls to the MCP server, and returns the response. Its behaviour prompts live in the **prompt module** (`src/agent/prompts/`) as Markdown files, not in Python. Independent deliverable — production-quality agent that Lenovo may run as-is, or replace with their own.
 _Avoid_: "bot", "chatbot", "orchestrator" (see ambiguity resolution below).
 
 **Prompt module**:
-The Markdown files under `src/agent/prompts/` carrying the reference agent's system prompt, safety rules, few-shot examples, and per-provider variants. File-based to enable non-engineer editing, per-provider swapping, and independent review tracks. Scoped inside the reference agent — tightly coupled to its orchestration loop, so NOT a cross-cutting deliverable. See [ADR 0006](./adr/0006-prompt-as-file-module.md).
+The Markdown files under `src/agent/prompts/` carrying the agent's system prompt, safety rules, few-shot examples, and per-provider variants. File-based to enable non-engineer editing, per-provider swapping, and independent review tracks. Scoped inside the agent — tightly coupled to its orchestration loop, so NOT a cross-cutting deliverable. See [ADR 0006](./adr/0006-prompt-as-file-module.md).
 
 **Skill bundle** (or "skill"):
 The file-based bundle (`SKILL.md` + `.mcp.json`) that tells any agent how and when to use the MCP server. Independent deliverable — works with any MCP-compliant agent.
 
 **External agent**:
-Any MCP-compliant client *other than* the reference agent — VS Code, Claude Desktop, Copilot Studio, a customer-built agent, etc. Treated identically to the reference agent by the MCP server.
+Any MCP-compliant client *other than* the agent — VS Code, Claude Desktop, Copilot Studio, a customer-built agent, etc. Treated identically to the agent by the MCP server.
 
 **Orchestrator** (anticipated, not in current scope):
 A layer above individual agents that routes a user request across multiple agents and composes their responses — e.g. a CRM agent + a calendar agent + an email agent working together. Out of scope for this project, but the decoupling invariant anticipates it: the MCP server and skill bundle must remain usable by a future orchestrator without modification.
 
 **UI**:
-The chat surface used by salespeople (web frontend, Teams bot, etc.). Out of scope for this repo; the reference agent exposes an HTTP endpoint any UI can call.
+The chat surface used by salespeople (web frontend, Teams bot, etc.). Out of scope for this repo; the agent exposes an HTTP endpoint any UI can call.
 
 ### Domain terms (Dynamics 365)
 
@@ -87,11 +87,11 @@ The validation script (`scripts/preflight.py`) the customer runs *before* deploy
 
 ## Relationships
 
-- A **User** authenticates against AAD; the **reference agent** or any **external agent** calls the **MCP server** on their behalf.
+- A **User** authenticates against AAD; the **agent** or any **external agent** calls the **MCP server** on their behalf.
 - The **MCP server** performs **OBO** using **WIF** to obtain a Dataverse-scoped token; **RLS** in **Dataverse** then filters **Opportunities** to what the **User** is allowed to see.
-- The **skill bundle** carries business SOP and a `.mcp.json` pointer; any MCP-compliant agent — reference or external — can use it to drive the **MCP server**.
-- The **reference agent** calls the **MCP server** over HTTP even when they share a Function App, so both paths exercise the same transport — see [ADR 0004](./adr/0004-http-mcp-transport-for-reference-agent.md).
-- **CLOUD_ENV** is set once per deployment; it parameterises every endpoint, authority, and audience the **MCP server** and **reference agent** use.
+- The **skill bundle** carries business SOP and a `.mcp.json` pointer; any MCP-compliant agent — this repo's agent or any external one — can use it to drive the **MCP server**.
+- The **agent** calls the **MCP server** over HTTP even when they share a Function App, so both paths exercise the same transport — see [ADR 0004](./adr/0004-http-mcp-transport-for-agent.md).
+- **CLOUD_ENV** is set once per deployment; it parameterises every endpoint, authority, and audience the **MCP server** and **agent** use.
 
 ## Example dialogue
 
@@ -105,7 +105,7 @@ The validation script (`scripts/preflight.py`) the customer runs *before* deploy
 
 ## Flagged ambiguities
 
-- **"agent"** was used to mean (a) the UI chat frontend, (b) the agent runtime (LLM + tool loop), or (c) the MCP tools. Resolved: "agent" = **reference agent** = the agent runtime; UI is separate and out of scope; tools live in the **MCP server**.
+- **"agent"** was used to mean (a) the UI chat frontend, (b) the agent runtime (LLM + tool loop), or (c) the MCP tools. Resolved: "agent" means the agent runtime shipped in this repo; UI is separate and out of scope; tools live in the **MCP server**.
 - **"secret"** was used to mean both the AAD app `client_secret` and tenant-specific values like `DATAVERSE_URL`. Resolved: `DATAVERSE_URL` is configuration (not sensitive in the cryptographic sense); `client_secret` is eliminated entirely via **WIF**.
 - **"skill"** can mean (a) Claude Code / agent-side skill bundle (this project's `skill/`) or (b) a generic Azure term. Resolved: in this repo, "skill" always means the file bundle shipped to agents.
 - **"environment"** is overloaded across (a) dev/staging/prod, (b) Azure Global vs Azure China, (c) Dataverse environments within a tenant. Resolved: we use **`CLOUD_ENV`** for (b) and qualify the others explicitly ("deployment environment", "Dataverse environment").

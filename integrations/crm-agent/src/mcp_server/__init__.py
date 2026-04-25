@@ -212,7 +212,7 @@ def build_server(deps: ServerDeps) -> Server:
                 name="delete_opportunity",
                 description=(
                     "Permanently delete an opportunity. Destructive and "
-                    "irreversible — the reference agent gates this behind a "
+                    "irreversible — the agent gates this behind a "
                     "user confirmation (ADR 0005, Slice 3)."
                 ),
                 inputSchema=_DELETE_OPPORTUNITY_SCHEMA,

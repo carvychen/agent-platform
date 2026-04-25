@@ -1,4 +1,4 @@
-"""Reference agent builder — composes an `agent_framework.Agent` from its parts.
+"""Agent builder — composes an `agent_framework.Agent` from its parts.
 
 ADR 0005 (amended) selects Microsoft Agent Framework as the orchestration
 runtime. The abstraction for "swap the LLM" is AF's own
@@ -78,7 +78,7 @@ def build_agent(
     current_date: str | None = None,
     mcp_http_client: httpx.AsyncClient | None = None,
 ) -> Agent:
-    """Compose a ready-to-run reference agent for the configured LLM provider.
+    """Compose a ready-to-run agent for the configured LLM provider.
 
     The Agent owns its chat client + its MCP tool connection; it is intended
     to live for the Function App host's lifetime.

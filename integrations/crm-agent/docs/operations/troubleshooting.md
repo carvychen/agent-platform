@@ -33,12 +33,12 @@ These show up during `az deployment group create`, `az ad app …`, or the first
 
 ## Agent-side (`/api/chat`) problems
 
-Skip this section if `ENABLE_REFERENCE_AGENT=false`.
+Skip this section if `ENABLE_AGENT=false`.
 
 | Symptom | Most likely cause | Diagnostic | Remediation |
 |---|---|---|---|
 | `/api/chat` returns 401 | User JWT missing or has wrong audience | App Insights request's `customDimensions` lacks `user_oid` | Verify the UI sends `Authorization: Bearer <user-jwt>` with audience = the AAD app's Application ID URI |
-| `/api/chat` returns 404 | `ENABLE_REFERENCE_AGENT=false` (agent route not mounted) | App Settings in Function App | Set `ENABLE_REFERENCE_AGENT=true` and restart; redeploy Bicep if the app setting itself is gone |
+| `/api/chat` returns 404 | `ENABLE_AGENT=false` (agent route not mounted) | App Settings in Function App | Set `ENABLE_AGENT=true` and restart; redeploy Bicep if the app setting itself is gone |
 | Agent returns "no tools available" | `MCP_SERVER_URL` wrong or self-call fails | App Insights → request chain shows the `/mcp` initialize POST failing | Confirm `MCP_SERVER_URL` is the Function App's own public URL + `/mcp`; Bicep sets it from `defaultHostName` but a manual env-var override would break it |
 | Stream stalls mid-response | Foundry deployment overloaded or quota exhausted | App Insights → dependencies → `Http Response Time` on the Foundry call | Preflight `foundry-reachability` catches the common cases; for quota, check Azure AI Foundry portal → Usage |
 | LLM repeatedly calls tools without finishing | Compaction strategy evicting key context | App Insights → `customDimensions.compaction_evictions > 0` | Increase `SlidingWindowStrategy(keep_last_groups=...)` in `src/agent/builder.py`; this is a tuning parameter per deployment |

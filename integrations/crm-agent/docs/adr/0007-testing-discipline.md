@@ -1,6 +1,6 @@
 # Two-tier testing: unit (mocked) + live (real tenant)
 
-Framework-level tests (mocks at every boundary) prove the code compiles and the wire format is parsed, but they cannot tell us the thing Lenovo actually cares about: whether the reference agent, when deployed to a real Azure tenant, successfully reaches Dataverse and returns the right records. To close that gap, every slice ships two layers of tests — fast unit tests with mocks, and a live-integration layer that exercises real Entra / Dataverse / Foundry / MCP against the author's Azure Global dev tenant. A PR does not merge until both layers are green.
+Framework-level tests (mocks at every boundary) prove the code compiles and the wire format is parsed, but they cannot tell us the thing Lenovo actually cares about: whether the agent, when deployed to a real Azure tenant, successfully reaches Dataverse and returns the right records. To close that gap, every slice ships two layers of tests — fast unit tests with mocks, and a live-integration layer that exercises real Entra / Dataverse / Foundry / MCP against the author's Azure Global dev tenant. A PR does not merge until both layers are green.
 
 ## Considered Options
 

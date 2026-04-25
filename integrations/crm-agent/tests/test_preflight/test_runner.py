@@ -64,7 +64,7 @@ async def test_render_human_format_marks_each_check_with_status_icon():
                 detail="Entra returned 401",
                 remediation="rotate AZURE_CLIENT_SECRET",
             ),
-            _scripted("foundry", "skip", detail="ENABLE_REFERENCE_AGENT=false"),
+            _scripted("foundry", "skip", detail="ENABLE_AGENT=false"),
         ]
     )
     text = render_human(results)
@@ -76,7 +76,7 @@ async def test_render_human_format_marks_each_check_with_status_icon():
     # Remediation surfaces only on fail, and is a separate visible line.
     assert "rotate AZURE_CLIENT_SECRET" in text
     assert "all hosts resolved" in text  # pass detail still shown
-    assert "ENABLE_REFERENCE_AGENT=false" in text  # skip detail still shown
+    assert "ENABLE_AGENT=false" in text  # skip detail still shown
 
 
 async def test_render_json_format_is_machine_parseable():

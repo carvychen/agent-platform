@@ -10,7 +10,7 @@ metadata:
 
 # CRM Opportunity Skill
 
-This skill tells an MCP-aware agent **how and when to use the Dynamics 365 CRM tools** exposed by the crm-agent MCP server. Every tool is implemented in the MCP server (see the main repo's `src/mcp_server.py`); this bundle carries only the SOP + the endpoint pointer — it contains no runtime code, no credentials, and no cloud-specific hostnames.
+This skill tells an MCP-aware agent **how and when to use the Dynamics 365 CRM tools** exposed by the crm-agent MCP server. Every tool is implemented in the MCP server (see the main repo's `src/mcp_server/`); this bundle carries only the SOP + the endpoint pointer — it contains no runtime code, no credentials, and no cloud-specific hostnames.
 
 Think of it as "the instruction manual that ships with the tools". A customer can drop this folder into any MCP-compliant agent host, edit `.mcp.json` to point at their deployed MCP server, and the agent knows what tools exist and when to use them.
 
@@ -37,7 +37,7 @@ The MCP server advertises these tools via `list_tools`. Trust that advertisement
 | `search_contacts` | Resolve a contact name to its GUID | `query` | Same shape as `search_accounts` |
 | `create_opportunity` | Create a new opportunity | `name`, `customer_id`, `customer_type` | `customer_type` is `account` or `contact` (polymorphic `customerid`) |
 | `update_opportunity` | Partial update | `opportunity_id` | Only fields you supply are changed |
-| `delete_opportunity` | Permanently delete | `opportunity_id` | Destructive — the reference agent gates this behind user approval |
+| `delete_opportunity` | Permanently delete | `opportunity_id` | Destructive — the agent gates this behind user approval |
 
 Rating values: `1`=Hot, `2`=Warm, `3`=Cold. Dates: `YYYY-MM-DD`. See [`references/FIELD_REFERENCE.md`](./references/FIELD_REFERENCE.md) for the full OData filter cookbook.
 
@@ -54,7 +54,7 @@ If the user names an account or contact (e.g. "create a deal for Fourth Coffee")
 
 ### 2. Confirm destructive operations
 
-- `delete_opportunity` — always describe what you are about to delete (the topic name, the customer name, the revenue) **before** calling the tool. The reference agent layers MCP approval on top; external clients should do the same.
+- `delete_opportunity` — always describe what you are about to delete (the topic name, the customer name, the revenue) **before** calling the tool. The agent layers MCP approval on top; external clients should do the same.
 - `update_opportunity` with large swings (probability drop ≥ 30 points, revenue change ≥ 50%) — briefly state what you're about to change and why.
 
 ### 3. Respect Dataverse RLS
@@ -107,7 +107,7 @@ This bundle works with any client that speaks [Streamable HTTP MCP](https://mode
 
 - Claude Desktop
 - VS Code / GitHub Copilot MCP
-- The reference agent in this repo (`src/agent/`)
+- The agent in this repo (`src/agent/`)
 - Copilot Studio (custom connector path)
 
 Host-specific wiring instructions are in each host's own documentation; the skill's only interface with the host is `.mcp.json`.
