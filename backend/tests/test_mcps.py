@@ -481,3 +481,66 @@ def test_get_mcp_scoped_to_tenant(client):
         assert client.get("/api/mcps/my-mcp", headers=AUTH).status_code == 404
     finally:
         app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# MCP-1c — GET /api/mcps/{name}/mcp-json (router integration)
+# ---------------------------------------------------------------------------
+
+
+def test_mcp_json_endpoint_returns_snippet(client, as_admin):
+    """Smoke test: the HTTP layer wires into build_mcp_json correctly.
+    Exhaustive shape assertions live in test_mcp_json.py — here we only
+    verify the router dispatches through the service + helper."""
+    assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+
+    resp = client.get("/api/mcps/my-mcp/mcp-json", headers=AUTH)
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("application/json")
+    body = resp.json()
+    assert body == {
+        "mcpServers": {
+            "my-mcp": {
+                "type": "streamable-http",
+                "url": "https://example.com/mcp",
+            }
+        }
+    }
+
+
+def test_mcp_json_endpoint_for_bearer_auth(client, as_admin):
+    body = {**_valid_body(), "auth_type": "bearer_static"}
+    assert client.post("/api/mcps", json=body, headers=AUTH).status_code == 201
+
+    resp = client.get("/api/mcps/my-mcp/mcp-json", headers=AUTH)
+    assert resp.status_code == 200
+    entry = resp.json()["mcpServers"]["my-mcp"]
+    assert "_note" in entry
+    assert "bearer" in entry["_note"].lower()
+
+
+def test_mcp_json_endpoint_404_on_missing(client, as_admin):
+    resp = client.get("/api/mcps/does-not-exist/mcp-json", headers=AUTH)
+    assert resp.status_code == 404
+
+
+def test_mcp_json_endpoint_available_to_skill_user(client):
+    """Any authenticated user can copy the snippet — read-only affordance."""
+    from app.mcps.router import get_mcp_service
+    from app.mcps.service import McpService
+
+    store = _InMemoryStore()
+    svc = McpService(store=store)
+    app.dependency_overrides[get_mcp_service] = lambda: svc
+    try:
+        # Admin creates
+        app.dependency_overrides[get_current_user] = lambda: _admin()
+        assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+
+        # SkillUser reads the snippet
+        app.dependency_overrides[get_current_user] = lambda: _read_only()
+        resp = client.get("/api/mcps/my-mcp/mcp-json", headers=AUTH)
+        assert resp.status_code == 200
+        assert "mcpServers" in resp.json()
+    finally:
+        app.dependency_overrides.clear()
