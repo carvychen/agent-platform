@@ -11,11 +11,11 @@ This service is the admin plane — pure CRUD. Runtime endpoints (`/mcp/*`, `/ap
 | Hub | Status | Location |
 |---|---|---|
 | Skill Hub | **Real CRUD** — 14 endpoints for list / get / create / update / delete / import / export / install-token / validate | `app/skills/` |
-| MCP Hub | **Real CRUD** — list / create / detail / edit / delete for external registrations; `.mcp.json` snippet pending | `app/mcps/` |
+| MCP Hub | **Real CRUD (full)** — list / create / detail / edit / delete / `.mcp.json` copy snippet for external registrations | `app/mcps/` |
 | Prompt Hub | 501 Coming Soon stub | `app/prompts/` |
 | Agent Hub | 501 Coming Soon stub | `app/agents/` |
 
-Stub hubs return the documented contract from [`app/core/coming_soon.py`](./app/core/coming_soon.py). Real CRUD for the remaining stubs is tracked under PRD [carvychen/agent-platform#1](https://github.com/carvychen/agent-platform/issues/1); MCP Hub's remaining slice lives under PRD [#14](https://github.com/carvychen/agent-platform/issues/14) (issue [#17](https://github.com/carvychen/agent-platform/issues/17) — `.mcp.json` copy snippet).
+Stub hubs return the documented contract from [`app/core/coming_soon.py`](./app/core/coming_soon.py). Real CRUD for the remaining stubs is tracked under PRD [carvychen/agent-platform#1](https://github.com/carvychen/agent-platform/issues/1).
 
 ## Module layout (vertical slicing)
 

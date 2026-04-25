@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.auth.dependencies import UserInfo, require_admin, require_any_role
+from app.mcps.mcp_json import build_mcp_json
 from app.mcps.models import McpCreateRequest, McpListResponse, McpResponse, McpUpdateRequest
 from app.mcps.service import McpAlreadyExists, McpNotFound, McpService
 from app.skills.service import BlobStorageService
@@ -92,3 +93,21 @@ def delete_mcp(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"MCP '{name}' not found",
         )
+
+
+@router.get("/{name}/mcp-json")
+def get_mcp_json_snippet(
+    name: str,
+    user: UserInfo = Depends(require_any_role),
+    svc: McpService = Depends(get_mcp_service),
+) -> dict:
+    """Return a ready-to-paste .mcp.json snippet. Any authenticated user
+    may call this — the affordance is read-only by design."""
+    try:
+        doc = svc.get(tenant_id=user.tenant_id, name=name)
+    except McpNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"MCP '{name}' not found",
+        )
+    return build_mcp_json(doc)
