@@ -69,13 +69,59 @@ Merged to `main`:
 
 ## Local development
 
+### Setup (one-time)
+
 ```bash
 rm -rf .venv && mamba create --prefix ./.venv python=3.11 -y  # or pyenv/venv equivalent
-.venv/bin/pip install -r requirements-dev.txt                 # prod + test deps
-.venv/bin/pytest                                              # 12 tests, <1s
+.venv/bin/pip install -r requirements-dev.txt                 # prod + test + local-run deps
+cp .env.example .env                                           # fill in tenant-specific values
+az login                                                       # required by DefaultAzureCredential
 ```
 
-The unit suite runs without any Azure resources — OBO exchanges and Dataverse calls are mocked via `respx` and `httpx.MockTransport`. Live-integration tests (`tests/integration/`) read credentials from a gitignored repo-root `.env` (see `.env.example` for the full template) and hit real Entra + Dataverse + Foundry on every PR per [ADR 0007](./docs/adr/0007-testing-discipline.md).
+### Run the test suite
+
+```bash
+.venv/bin/pytest
+```
+
+The unit suite runs without any Azure resources — OBO exchanges and Dataverse calls are mocked via `respx` and `httpx.MockTransport`. Live-integration tests (`tests/integration/`) read credentials from the gitignored `.env` file and hit real Entra + Dataverse + Foundry on every PR per [ADR 0007](./docs/adr/0007-testing-discipline.md).
+
+### Run the app locally — quick dev loop (`scripts/run_local.py`)
+
+```bash
+.venv/bin/python scripts/run_local.py
+```
+
+Serves `/mcp/*` (and, when `ENABLE_AGENT=true`, `/api/chat`) on `http://127.0.0.1:8000`. The script loads `.env`, composes the same `ServerDeps` + agent the Function App does, and hands the ASGI app to uvicorn — **skipping** `FlexAsgiFunctionApp` and the Azure Functions runtime, so cold start is seconds and reloads are instant. Best for iterating on prompt / tool logic.
+
+Minimum `.env` for this path:
+
+```bash
+CLOUD_ENV=global
+DATAVERSE_URL=https://<your-org>.crm.dynamics.com
+AAD_APP_CLIENT_ID=<app-registration-client-id>
+AAD_APP_TENANT_ID=<tenant-id>
+ENABLE_AGENT=false              # set to true + fill FOUNDRY_* + MCP_SERVER_URL to also serve /api/chat
+```
+
+Smoke-check once the server is up:
+
+```bash
+curl http://127.0.0.1:8000/mcp  # MCP endpoint (should respond to a Streamable HTTP init)
+```
+
+### Run the app locally — full-stack smoke (`func start`)
+
+Use this path when you want the actual Azure Functions runtime in the loop — e.g. to verify `FlexAsgiFunctionApp`'s route-template fix or Application Insights wiring.
+
+Prerequisites: [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local).
+
+```bash
+cp local.settings.json.example local.settings.json   # then fill in the empty "" values
+func start                                            # serves on http://localhost:7071
+```
+
+`local.settings.json` is gitignored — it can safely hold tenant IDs / client secrets. `AzureWebJobsStorage` defaults to the local Azurite emulator (`UseDevelopmentStorage=true`); install Azurite if you need it to actually boot, or swap in a real storage connection string.
 
 ## Environment variables (MCP server)
 
