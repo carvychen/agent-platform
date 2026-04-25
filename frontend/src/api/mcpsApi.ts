@@ -24,3 +24,8 @@ export async function updateMcp(name: string, req: McpUpdateRequest): Promise<Mc
 export async function deleteMcp(name: string): Promise<void> {
   await apiClient.delete(`/mcps/${encodeURIComponent(name)}`);
 }
+
+export async function getMcpJsonSnippet(name: string): Promise<unknown> {
+  const { data } = await apiClient.get<unknown>(`/mcps/${encodeURIComponent(name)}/mcp-json`);
+  return data;
+}

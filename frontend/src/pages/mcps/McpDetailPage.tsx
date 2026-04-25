@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Pencil, Trash2, Link as LinkIcon, Clock } from "lucide-react";
+import { Pencil, Trash2, Link as LinkIcon, Clock, Copy, Check } from "lucide-react";
 import { TopBar } from "../../components/layout/TopBar";
 import { Breadcrumb } from "../../components/ui/Breadcrumb";
 import { useMcp, useDeleteMcp } from "../../hooks/useMcps";
 import { useRoles } from "../../auth/useRoles";
+import { getMcpJsonSnippet } from "../../api/mcpsApi";
 
 const transportLabels: Record<string, string> = {
   "streamable-http": "streamable-http",
@@ -31,12 +33,27 @@ export function McpDetailPage() {
   const { data: mcp, isLoading, isError } = useMcp(name);
   const deleteMutation = useDeleteMcp();
   const { canWrite } = useRoles();
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
   const handleDelete = async () => {
     if (!name) return;
     if (!confirm(`Delete MCP "${name}"? This cannot be undone.`)) return;
     await deleteMutation.mutateAsync(name);
     navigate("/mcps");
+  };
+
+  const handleCopyMcpJson = async () => {
+    if (!name) return;
+    try {
+      const snippet = await getMcpJsonSnippet(name);
+      await navigator.clipboard.writeText(JSON.stringify(snippet, null, 2));
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 2000);
+    } catch (err) {
+      console.error("Failed to copy .mcp.json", err);
+      setCopyState("failed");
+      setTimeout(() => setCopyState("idle"), 3000);
+    }
   };
 
   if (isLoading) return <div className="p-8 text-text-muted">Loading...</div>;
@@ -58,27 +75,53 @@ export function McpDetailPage() {
               <p className="mt-1 text-sm font-mono text-text-muted">{mcp.name}</p>
             </div>
 
-            {canWrite && (
-              <div className="flex items-center gap-2 shrink-0">
-                <Link
-                  to={`/mcps/${encodeURIComponent(mcp.name)}/edit`}
-                  data-testid="edit-mcp-button"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit
-                </Link>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                  data-testid="delete-mcp-button"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-card border border-border rounded-lg text-error hover:border-error/50 disabled:opacity-50 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleCopyMcpJson}
+                data-testid="copy-mcp-json-button"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
+                title="Copy .mcp.json snippet"
+              >
+                {copyState === "copied" ? (
+                  <>
+                    <Check className="w-4 h-4 text-success" />
+                    Copied
+                  </>
+                ) : copyState === "failed" ? (
+                  <>
+                    <Copy className="w-4 h-4 text-error" />
+                    Copy failed
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    Copy .mcp.json
+                  </>
+                )}
+              </button>
+
+              {canWrite && (
+                <>
+                  <Link
+                    to={`/mcps/${encodeURIComponent(mcp.name)}/edit`}
+                    data-testid="edit-mcp-button"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </Link>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                    data-testid="delete-mcp-button"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-card border border-border rounded-lg text-error hover:border-error/50 disabled:opacity-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="space-y-6 bg-card rounded-xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.04)]">
