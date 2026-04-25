@@ -10,9 +10,9 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from auth import build_auth
-from config import get_config
-from dataverse_client import OpportunityClient
+from shared.auth import build_auth
+from shared.config import get_config
+from shared.dataverse_client import OpportunityClient
 
 
 async def test_list_opportunities_against_live_dataverse():

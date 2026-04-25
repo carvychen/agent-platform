@@ -33,10 +33,10 @@ async def test_skill_bundle_works_with_external_mcp_client():
     """Drive the MCP server through the URL pattern in `.mcp.json` to prove
     external agents can consume this skill identically to the reference
     agent (Invariant 1)."""
-    from asgi import create_asgi_app
-    from auth import build_auth
-    from config import get_config
-    from dataverse_client import OpportunityClient
+    from shared.asgi import create_asgi_app
+    from shared.auth import build_auth
+    from shared.config import get_config
+    from shared.dataverse_client import OpportunityClient
     from mcp_server import ServerDeps
 
     # Any external client would read .mcp.json like this:

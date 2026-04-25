@@ -11,7 +11,7 @@ Framework-level tests (mocks at every boundary) prove the code compiles and the 
 
 ## Consequences
 
-### `AUTH_MODE` switch in `src/auth.py`
+### `AUTH_MODE` switch in `src/shared/auth.py`
 
 - `AUTH_MODE=obo` (default in deployed code, unchanged from ADR 0001) — Managed Identity → Federated Identity Credential → OBO exchange of the inbound user JWT → Dataverse-scoped token. Production path.
 - `AUTH_MODE=app_only_secret` (dev + CI integration tests only) — ignores any inbound user JWT, uses `AZURE_CLIENT_ID` + `AZURE_CLIENT_SECRET` + `AZURE_TENANT_ID` to run the OAuth 2.0 `client_credentials` flow and return an app-only Dataverse-scoped token. The authority / scope are still pulled from `CloudConfig` (ADR 0003).
@@ -29,7 +29,7 @@ Framework-level tests (mocks at every boundary) prove the code compiles and the 
 ### `tests/integration/` (live, always run on PR)
 
 - Real HTTPS to Entra ID + Dataverse Web API + Azure AI Foundry.
-- Drives the same `src/asgi.py` Starlette app; no in-process shortcuts.
+- Drives the same `src/shared/asgi.py` Starlette app; no in-process shortcuts.
 - Secrets sourced from the repo-root `.env` locally (gitignored) or GitHub repo secrets in CI. The skill bundle carries no credentials (ADR 0001, Slice 7) — the legacy `skills/crm-opportunity/.env` file was retired when the skill bundle was rewritten. `tests/integration/conftest.py` reads `.env` with `python-dotenv` if present and skips the entire integration layer when required vars are absent (so local-unit-only contributors are not blocked).
 - Data contract: every test that writes to Dataverse uses a record name prefixed `CRM-Agent-Test-<uuid4>` and deletes it in `finally:`. A nightly `cleanup-stale-test-records` job (defined in Slice 9 #11) deletes any orphans as a safety net.
 - The GitHub Actions `integration` job is **required** to merge a PR (branch protection rule referenced in Slice 9's Bicep / repo-settings docs).
@@ -51,7 +51,7 @@ Some slices cannot, by construction, be live-tested from our side because the ve
 For these slices, the live-integration requirement is **replaced**, not waived. The substitute verification stack is:
 
 1. **Parametric unit tests** — every assertion that holds for the accessible cloud (`global`) is also executed against the inaccessible branch with the matching expected values. `test_config` runs `CLOUD_ENV=global` and `CLOUD_ENV=china` side by side and the parametric id fails visibly in CI output.
-2. **Source-level literal lint** — a pytest-based check (`tests/test_cloud_literals_lint.py`) fails if any `dynamics.com` / `dynamics.cn` / `login.microsoftonline.com` / `login.partner.microsoftonline.cn` / `AzureADTokenExchange(China)?` literal lands outside `src/config.py` or test fixtures. Catches the most common cloud-parity regression: a helper quietly pinning the wrong authority.
+2. **Source-level literal lint** — a pytest-based check (`tests/test_cloud_literals_lint.py`) fails if any `dynamics.com` / `dynamics.cn` / `login.microsoftonline.com` / `login.partner.microsoftonline.cn` / `AzureADTokenExchange(China)?` literal lands outside `src/shared/config.py` or test fixtures. Catches the most common cloud-parity regression: a helper quietly pinning the wrong authority.
 3. **CI Bicep `what-if` under both parameter files** — Slice 9 (#11) adds `az deployment group what-if` runs for `parameters.global.json` and `parameters.china.json` against a scratch resource group in the author's Azure Global subscription. `what-if` is a template-rendering + resource-validation operation that does not require authorization in the target cloud, so it catches Bicep-level drift across both branches.
 4. **HITL review against Microsoft Learn public docs** — the HITL reviewer MUST explicitly cross-check every `china` branch value (authority host, FIC audience, Dataverse suffix, Log Analytics endpoint, etc.) against Microsoft's published Azure China documentation and record the check in the PR. This is what an ideal live test would catch if it existed.
 5. **Customer pre-flight at UAT** — Slice 8 (#10) pre-flight script runs in the customer's Azure China tenant and is the **final** live verification of the inaccessible branch. It is executed by Lenovo's platform engineer, not by us.

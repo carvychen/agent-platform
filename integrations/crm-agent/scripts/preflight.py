@@ -35,20 +35,20 @@ try:
 except ImportError:
     pass
 
-# Map legacy demo credential names onto what src/config.py expects.
+# Map legacy demo credential names onto what src/shared/config.py expects.
 os.environ.setdefault("AAD_APP_CLIENT_ID", os.environ.get("AZURE_CLIENT_ID", ""))
 os.environ.setdefault("AAD_APP_TENANT_ID", os.environ.get("AZURE_TENANT_ID", ""))
 
 import httpx  # noqa: E402
 
-from config import get_config  # noqa: E402
-from preflight.checks import (  # noqa: E402
+from shared.config import get_config  # noqa: E402
+from shared.preflight.checks import (  # noqa: E402
     DnsReachabilityCheck,
     FoundryReachabilityCheck,
     TokenAcquisitionCheck,
     WhoAmICheck,
 )
-from preflight.core import (  # noqa: E402
+from shared.preflight.core import (  # noqa: E402
     exit_code_for,
     render_human,
     render_json,

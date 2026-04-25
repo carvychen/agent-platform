@@ -19,7 +19,7 @@ from typing import Awaitable, Callable, Protocol
 
 import httpx
 
-from config import CloudConfig
+from .config import CloudConfig
 
 MiTokenProvider = Callable[[], str]
 Clock = Callable[[], datetime]

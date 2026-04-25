@@ -354,7 +354,7 @@ proper Managed Identity.
 This led to two fixes in commit `f49b4c7` (both apply to production, not just the rehearsal):
 
 1. **`DefaultAzureCredential` needs the MI's client ID explicitly** on a Function App with only a User-Assigned MI (no system MI). `function_app.py` now builds `DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"])`. Prior test suites all used `AUTH_MODE=app_only_secret`, so this code path was never exercised before Step 8.
-2. **`src/auth.py` swallowed Entra error bodies.** The only visible error was `Client error '401 Unauthorized' for url 'https://login.microsoftonline.com/…'` — the actual `AADSTS` code was invisible. `DataverseAuth.get_dataverse_token` now raises `HTTPStatusError` with the response body appended, so any future OBO misconfiguration surfaces its AADSTS code in the MCP tool-call output directly.
+2. **`src/shared/auth.py` swallowed Entra error bodies.** The only visible error was `Client error '401 Unauthorized' for url 'https://login.microsoftonline.com/…'` — the actual `AADSTS` code was invisible. `DataverseAuth.get_dataverse_token` now raises `HTTPStatusError` with the response body appended, so any future OBO misconfiguration surfaces its AADSTS code in the MCP tool-call output directly.
 
 ### 8.4 — OBO blocked by T2 tenant policy (Runbook bug #7)
 

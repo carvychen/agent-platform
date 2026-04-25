@@ -100,7 +100,7 @@ One-shot migration, no other changes. Branch `feat/migrate-crm-agent`.
 - Run `git filter-repo --to-subdirectory-filter integrations/crm-agent` (on a copy; filter-repo is destructive on the source).
 - Add rewritten repo as a remote on `agent-platform`.
 - `git merge --allow-unrelated-histories` onto `main`.
-- Verify `git log -- integrations/crm-agent/src/auth.py` shows the full crm-agent PR history.
+- Verify `git log -- integrations/crm-agent/src/shared/auth.py` shows the full crm-agent PR history.
 - Open PR; no code diffs, just a directory tree of files appearing at `integrations/crm-agent/*` with authentic commit history.
 
 ### PR3 — Contexts, READMEs, frontend Coming Soon wiring

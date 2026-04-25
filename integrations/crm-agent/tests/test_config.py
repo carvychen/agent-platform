@@ -22,7 +22,7 @@ def test_cloud_env_resolves_to_expected_authority_and_fic_audience(
     monkeypatch.setenv("AAD_APP_CLIENT_ID", "11111111-1111-1111-1111-111111111111")
     monkeypatch.setenv("AAD_APP_TENANT_ID", "22222222-2222-2222-2222-222222222222")
 
-    from config import get_config
+    from shared.config import get_config
 
     cfg = get_config()
 
@@ -42,7 +42,7 @@ def test_unknown_cloud_env_raises_structured_error(monkeypatch):
     monkeypatch.setenv("AAD_APP_CLIENT_ID", "11111111-1111-1111-1111-111111111111")
     monkeypatch.setenv("AAD_APP_TENANT_ID", "22222222-2222-2222-2222-222222222222")
 
-    from config import UnsupportedCloudError, get_config
+    from shared.config import UnsupportedCloudError, get_config
 
     with pytest.raises(UnsupportedCloudError) as excinfo:
         get_config()

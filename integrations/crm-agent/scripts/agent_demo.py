@@ -11,7 +11,7 @@ Features:
   - Usage/token tracking
 
 Usage:
-    python agent.py
+    python scripts/agent_demo.py
 """
 
 import asyncio
@@ -183,7 +183,7 @@ async def main() -> None:
         credential=AzureCliCredential(),
     )
 
-    skills_dir = Path(__file__).parent / "skills"
+    skills_dir = Path(__file__).resolve().parent.parent / "skills"
     skills_provider = SkillsProvider(
         skill_paths=str(skills_dir),
         script_runner=subprocess_script_runner,

@@ -40,7 +40,7 @@ All green on a correctly configured deployment:
 
 ## Failure → remediation
 
-The full remediation tree lives in the code (`src/preflight/checks.py`), but here's the quick map:
+The full remediation tree lives in the code (`src/shared/preflight/checks.py`), but here's the quick map:
 
 | Failing check | Most common cause | First thing to try |
 |---|---|---|

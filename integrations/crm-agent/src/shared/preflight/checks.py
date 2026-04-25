@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from preflight.core import CheckResult
+from .core import CheckResult
 
 Resolver = Callable[[str], str]
 

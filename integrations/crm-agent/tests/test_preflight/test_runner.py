@@ -8,7 +8,7 @@ import pytest
 
 def _scripted(name: str, status: str, detail: str = "", remediation: str = ""):
     """Build a fake Check that returns a pre-canned CheckResult."""
-    from preflight.core import CheckResult
+    from shared.preflight.core import CheckResult
 
     class _Scripted:
         def __init__(self):
@@ -23,7 +23,7 @@ def _scripted(name: str, status: str, detail: str = "", remediation: str = ""):
 
 
 async def test_runner_returns_all_pass_when_every_check_passes():
-    from preflight.core import run_checks
+    from shared.preflight.core import run_checks
 
     results = await run_checks(
         [
@@ -36,7 +36,7 @@ async def test_runner_returns_all_pass_when_every_check_passes():
 
 
 async def test_runner_collects_mixed_results():
-    from preflight.core import run_checks
+    from shared.preflight.core import run_checks
 
     results = await run_checks(
         [
@@ -53,7 +53,7 @@ async def test_runner_collects_mixed_results():
 
 async def test_render_human_format_marks_each_check_with_status_icon():
     """Human output must be scannable by a platform engineer on the console."""
-    from preflight.core import render_human, run_checks
+    from shared.preflight.core import render_human, run_checks
 
     results = await run_checks(
         [
@@ -80,7 +80,7 @@ async def test_render_human_format_marks_each_check_with_status_icon():
 
 
 async def test_render_json_format_is_machine_parseable():
-    from preflight.core import render_json, run_checks
+    from shared.preflight.core import render_json, run_checks
 
     results = await run_checks(
         [
@@ -103,7 +103,7 @@ async def test_render_json_format_is_machine_parseable():
 
 
 def test_exit_code_zero_when_all_pass_or_skip():
-    from preflight.core import CheckResult, exit_code_for
+    from shared.preflight.core import CheckResult, exit_code_for
 
     all_pass = [CheckResult(name="x", status="pass", detail="")]
     all_skip = [CheckResult(name="x", status="skip", detail="disabled")]
@@ -117,7 +117,7 @@ def test_exit_code_zero_when_all_pass_or_skip():
 
 
 def test_exit_code_nonzero_when_any_fail():
-    from preflight.core import CheckResult, exit_code_for
+    from shared.preflight.core import CheckResult, exit_code_for
 
     one_fail = [
         CheckResult(name="x", status="pass", detail=""),

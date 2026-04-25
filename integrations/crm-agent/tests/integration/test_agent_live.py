@@ -64,10 +64,10 @@ async def test_api_chat_end_to_end_live():
 
     from agent.builder import build_agent
     from agent.prompts.loader import PromptLoader
-    from asgi import create_asgi_app
-    from auth import build_auth
-    from config import get_config
-    from dataverse_client import OpportunityClient
+    from shared.asgi import create_asgi_app
+    from shared.auth import build_auth
+    from shared.config import get_config
+    from shared.dataverse_client import OpportunityClient
     from mcp_server import ServerDeps
 
     def _foundry_credential():

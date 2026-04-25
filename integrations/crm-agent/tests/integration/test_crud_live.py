@@ -12,9 +12,9 @@ import uuid
 import httpx
 import pytest
 
-from auth import build_auth
-from config import get_config
-from dataverse_client import OpportunityClient
+from shared.auth import build_auth
+from shared.config import get_config
+from shared.dataverse_client import OpportunityClient
 
 
 async def _first_account_id(http: httpx.AsyncClient, token: str, base_url: str) -> str:
