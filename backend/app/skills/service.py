@@ -245,6 +245,9 @@ class BlobStorageService:
         except Exception:
             return False
 
+    def delete(self, path: str) -> None:
+        self.container_client.get_blob_client(path).delete_blob()
+
     @staticmethod
     def _parse_frontmatter(content: str) -> dict:
         if not content.startswith("---"):

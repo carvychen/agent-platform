@@ -1,7 +1,7 @@
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Transport = Literal["streamable-http", "sse", "stdio"]
 AuthType = Literal["none", "bearer_static", "oauth_bearer_from_host"]
@@ -38,6 +38,25 @@ class McpCreateRequest(BaseModel):
     # `platform_authored` is the forward-compat slot for MCP-2 (one-click deploy);
     # this slice only admits external registrations.
     source: Literal["external"] = "external"
+    metadata: dict[str, str] | None = None
+
+    @field_validator("endpoint_url")
+    @classmethod
+    def _check_endpoint_url(cls, v: str) -> str:
+        return _validate_endpoint_url(v)
+
+
+class McpUpdateRequest(BaseModel):
+    # Full replacement of the 6 mutable fields. Immutable fields
+    # (`name`, `source`, `created_at`, `updated_at`) are rejected structurally
+    # via `extra='forbid'` — the client must strip them before PUT.
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str = Field(..., min_length=1, max_length=80)
+    description: str = Field(..., min_length=1, max_length=500)
+    endpoint_url: str = Field(..., min_length=1)
+    transport: Transport
+    auth_type: AuthType
     metadata: dict[str, str] | None = None
 
     @field_validator("endpoint_url")

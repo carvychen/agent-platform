@@ -7,6 +7,7 @@ class BlobJsonStore(Protocol):
     def read_json(self, path: str) -> dict | None: ...
     def list_names(self, prefix: str) -> list[str]: ...
     def exists(self, path: str) -> bool: ...
+    def delete(self, path: str) -> None: ...
 
 
 def _now_iso() -> str:
@@ -23,6 +24,10 @@ def _tenant_mcps_prefix(tenant_id: str) -> str:
 
 class McpAlreadyExists(Exception):
     """Raised when create() is called for a slug already present in the tenant."""
+
+
+class McpNotFound(Exception):
+    """Raised when get/update/delete references a slug the tenant has not registered."""
 
 
 class McpService:
@@ -58,3 +63,31 @@ class McpService:
         }
         self._store.write_json(path, doc)
         return doc
+
+    def get(self, tenant_id: str, name: str) -> dict:
+        doc = self._store.read_json(_metadata_path(tenant_id, name))
+        if doc is None:
+            raise McpNotFound(name)
+        return doc
+
+    def update(self, tenant_id: str, name: str, patch: dict) -> dict:
+        path = _metadata_path(tenant_id, name)
+        existing = self._store.read_json(path)
+        if existing is None:
+            raise McpNotFound(name)
+        updated = {
+            **existing,
+            **patch,
+            "name": existing["name"],
+            "source": existing["source"],
+            "created_at": existing["created_at"],
+            "updated_at": _now_iso(),
+        }
+        self._store.write_json(path, updated)
+        return updated
+
+    def delete(self, tenant_id: str, name: str) -> None:
+        path = _metadata_path(tenant_id, name)
+        if not self._store.exists(path):
+            raise McpNotFound(name)
+        self._store.delete(path)

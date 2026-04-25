@@ -81,7 +81,7 @@ When a hub gets a real implementation, its `router.py` is replaced wholesale; th
 
 ### Shared blob helpers
 
-Non-skill hubs (MCP today; future Prompt / Agent) store a single JSON document per artifact rather than a multi-file bundle. `BlobStorageService` (in `app/skills/service.py` — location is historical; a future refactor may promote it to `app/core/`) exposes four generic helpers — `write_json` / `read_json` / `list_names` / `exists` — that each hub's domain service composes. The domain service (e.g. `McpService`) owns path conventions and invariants like `source` / `created_at` / `updated_at`; the blob service stays infrastructure-only. Tests inject an in-memory substitute satisfying the same four-method contract, so hub behavior is exercised without mocking the Azure SDK.
+Non-skill hubs (MCP today; future Prompt / Agent) store a single JSON document per artifact rather than a multi-file bundle. `BlobStorageService` (in `app/skills/service.py` — location is historical; a future refactor may promote it to `app/core/`) exposes five generic helpers — `write_json` / `read_json` / `list_names` / `exists` / `delete` — that each hub's domain service composes. The domain service (e.g. `McpService`) owns path conventions and invariants like `source` / `created_at` / `updated_at`; the blob service stays infrastructure-only. Tests inject an in-memory substitute satisfying the same five-method contract, so hub behavior is exercised without mocking the Azure SDK.
 
 ## Relationships
 

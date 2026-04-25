@@ -31,6 +31,9 @@ class _InMemoryStore:
     def exists(self, path: str) -> bool:
         return path in self._data
 
+    def delete(self, path: str) -> None:
+        self._data.pop(path, None)
+
 
 def _admin(tenant_id: str = "tenant-a") -> UserInfo:
     return UserInfo(
@@ -288,3 +291,193 @@ def test_source_platform_authored_is_rejected_in_this_slice(client, as_admin):
     # Explicit source="external" is fine, equivalent to omitting it
     body["source"] = "external"
     assert client.post("/api/mcps", json=body, headers=AUTH).status_code == 201
+
+
+# ---------------------------------------------------------------------------
+# MCP-1b — GET / PUT / DELETE /api/mcps/{name}
+# ---------------------------------------------------------------------------
+
+
+def _valid_body(**overrides) -> dict:
+    body = {
+        "name": "my-mcp",
+        "display_name": "My MCP",
+        "description": "First version.",
+        "endpoint_url": "https://example.com/mcp",
+        "transport": "streamable-http",
+        "auth_type": "none",
+    }
+    body.update(overrides)
+    return body
+
+
+def test_get_mcp_returns_created_doc(client, as_admin):
+    assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+
+    resp = client.get("/api/mcps/my-mcp", headers=AUTH)
+    assert resp.status_code == 200
+    doc = resp.json()
+    assert doc["name"] == "my-mcp"
+    assert doc["display_name"] == "My MCP"
+    assert doc["description"] == "First version."
+    assert doc["endpoint_url"] == "https://example.com/mcp"
+    assert doc["source"] == "external"
+    assert doc["created_at"]
+    assert doc["updated_at"] == doc["created_at"]
+
+
+def test_get_unknown_mcp_returns_404(client, as_admin):
+    resp = client.get("/api/mcps/does-not-exist", headers=AUTH)
+    assert resp.status_code == 404
+
+
+def test_put_updates_mutable_fields_and_bumps_updated_at(client, as_admin):
+    import time
+
+    assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+    created = client.get("/api/mcps/my-mcp", headers=AUTH).json()
+
+    time.sleep(0.01)  # guarantee timestamp monotonically advances
+
+    update = {
+        "display_name": "Renamed",
+        "description": "Second version.",
+        "endpoint_url": "https://new.example.com/mcp",
+        "transport": "sse",
+        "auth_type": "bearer_static",
+        "metadata": {"owner": "team-a"},
+    }
+    resp = client.put("/api/mcps/my-mcp", json=update, headers=AUTH)
+    assert resp.status_code == 200, resp.text
+    updated = resp.json()
+    assert updated["display_name"] == "Renamed"
+    assert updated["description"] == "Second version."
+    assert updated["endpoint_url"] == "https://new.example.com/mcp"
+    assert updated["transport"] == "sse"
+    assert updated["auth_type"] == "bearer_static"
+    assert updated["metadata"] == {"owner": "team-a"}
+    # Invariants preserved: name, source, created_at
+    assert updated["name"] == "my-mcp"
+    assert updated["source"] == "external"
+    assert updated["created_at"] == created["created_at"]
+    assert updated["updated_at"] != created["updated_at"]
+
+
+def test_put_unknown_mcp_returns_404(client, as_admin):
+    update = {
+        "display_name": "X",
+        "description": "X",
+        "endpoint_url": "https://example.com/mcp",
+        "transport": "streamable-http",
+        "auth_type": "none",
+    }
+    resp = client.put("/api/mcps/does-not-exist", json=update, headers=AUTH)
+    assert resp.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "extra_field",
+    [
+        {"name": "renamed"},
+        {"source": "platform_authored"},
+        {"created_at": "2099-01-01T00:00:00+00:00"},
+        {"updated_at": "2099-01-01T00:00:00+00:00"},
+    ],
+)
+def test_put_rejects_immutable_fields_in_payload(client, as_admin, extra_field):
+    assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+    update = {
+        "display_name": "X",
+        "description": "X",
+        "endpoint_url": "https://example.com/mcp",
+        "transport": "streamable-http",
+        "auth_type": "none",
+        **extra_field,
+    }
+    resp = client.put("/api/mcps/my-mcp", json=update, headers=AUTH)
+    assert resp.status_code == 422, f"{extra_field} should be rejected, got {resp.status_code}"
+
+
+def test_put_endpoint_url_validation_reuses_post_rules(client, as_admin):
+    assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+    update = {
+        "display_name": "X",
+        "description": "X",
+        "endpoint_url": "http://example.com/mcp",  # plain http, non-loopback → rejected
+        "transport": "streamable-http",
+        "auth_type": "none",
+    }
+    resp = client.put("/api/mcps/my-mcp", json=update, headers=AUTH)
+    assert resp.status_code == 422
+
+
+def test_delete_removes_mcp_and_second_delete_returns_404(client, as_admin):
+    assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+
+    resp = client.delete("/api/mcps/my-mcp", headers=AUTH)
+    assert resp.status_code == 204
+    assert resp.content == b""
+
+    # Gone from GET and list
+    assert client.get("/api/mcps/my-mcp", headers=AUTH).status_code == 404
+    assert client.get("/api/mcps", headers=AUTH).json() == {"mcps": []}
+
+    # Second DELETE → 404
+    assert client.delete("/api/mcps/my-mcp", headers=AUTH).status_code == 404
+
+
+def test_delete_unknown_mcp_returns_404(client, as_admin):
+    assert client.delete("/api/mcps/never-existed", headers=AUTH).status_code == 404
+
+
+def test_skill_user_can_get_but_cannot_put_or_delete(client):
+    """Read-only role: GET {name} ok (200 / 404 behavior intact), PUT/DELETE → 403."""
+    from app.mcps.router import get_mcp_service
+    from app.mcps.service import McpService
+
+    store = _InMemoryStore()
+    svc = McpService(store=store)
+    app.dependency_overrides[get_mcp_service] = lambda: svc
+
+    try:
+        # Admin creates something so tenant scoping matches
+        app.dependency_overrides[get_current_user] = lambda: _admin()
+        assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+
+        # Switch to SkillUser
+        app.dependency_overrides[get_current_user] = lambda: _read_only()
+        assert client.get("/api/mcps/my-mcp", headers=AUTH).status_code == 200
+
+        update = {
+            "display_name": "X",
+            "description": "X",
+            "endpoint_url": "https://example.com/mcp",
+            "transport": "streamable-http",
+            "auth_type": "none",
+        }
+        assert client.put("/api/mcps/my-mcp", json=update, headers=AUTH).status_code == 403
+        assert client.delete("/api/mcps/my-mcp", headers=AUTH).status_code == 403
+
+        # And the doc survives the rejected writes
+        app.dependency_overrides[get_current_user] = lambda: _admin()
+        assert client.get("/api/mcps/my-mcp", headers=AUTH).json()["display_name"] == "My MCP"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_get_mcp_scoped_to_tenant(client):
+    """Tenant A registers an MCP; tenant B GET of the same slug returns 404."""
+    from app.mcps.router import get_mcp_service
+    from app.mcps.service import McpService
+
+    store = _InMemoryStore()
+    svc = McpService(store=store)
+    app.dependency_overrides[get_mcp_service] = lambda: svc
+    try:
+        app.dependency_overrides[get_current_user] = lambda: _admin("tenant-a")
+        assert client.post("/api/mcps", json=_valid_body(), headers=AUTH).status_code == 201
+
+        app.dependency_overrides[get_current_user] = lambda: _admin("tenant-b")
+        assert client.get("/api/mcps/my-mcp", headers=AUTH).status_code == 404
+    finally:
+        app.dependency_overrides.clear()
