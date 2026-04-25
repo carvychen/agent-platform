@@ -1,13 +1,13 @@
 """Azure Functions entry point (Python v2 programming model).
 
-Bootstraps the MCP-server ASGI app and, unless `ENABLE_REFERENCE_AGENT=false`,
-also mounts the reference agent (Microsoft Agent Framework) at /api/chat.
+Bootstraps the MCP-server ASGI app and, unless `ENABLE_AGENT=false`,
+also mounts the agent (Microsoft Agent Framework) at /api/chat.
 Authentication (Azure Easy Auth) is configured at the Function App level by
 the Bicep in Slice 9 (#11); this layer just forwards the inbound
 `Authorization: Bearer <user-jwt>` header to OBO and into the agent.
 
 Per ADR 0002 the MCP SDK is self-hosted on an HTTP trigger, not the preview
-Functions MCP extension. Per ADR 0004 the reference agent talks to the MCP
+Functions MCP extension. Per ADR 0004 the agent talks to the MCP
 server over HTTP even when co-located (via AF's `MCPStreamableHTTPTool`).
 """
 from __future__ import annotations
@@ -90,8 +90,8 @@ def _build_mcp_server_deps() -> ServerDeps:
     )
 
 
-def _build_reference_agent():
-    """Compose the AF-based reference agent. Delayed-import because the
+def _build_agent():
+    """Compose the AF-based agent. Delayed-import because the
     heavy agent_framework deps should only load when enabled."""
     from agent.builder import build_agent
     from agent.prompts.loader import PromptLoader
@@ -120,11 +120,11 @@ def _require_env(name: str) -> str:
 
 
 def _agent_enabled() -> bool:
-    return os.environ.get("ENABLE_REFERENCE_AGENT", "true").strip().lower() != "false"
+    return os.environ.get("ENABLE_AGENT", "true").strip().lower() != "false"
 
 
 _assert_prod_uses_obo()
-_agent = _build_reference_agent() if _agent_enabled() else None
+_agent = _build_agent() if _agent_enabled() else None
 _asgi_app = create_asgi_app(_build_mcp_server_deps(), agent=_agent)
 
 # FlexAsgiFunctionApp — not func.AsgiFunctionApp — works around a leading-slash

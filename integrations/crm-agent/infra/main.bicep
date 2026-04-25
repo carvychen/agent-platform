@@ -1,6 +1,6 @@
 // CRM Agent Platform — root Bicep orchestrator (Slice 9).
 //
-// Deploys the MCP server + reference agent as one Function App, with
+// Deploys the MCP server + agent as one Function App, with
 // identity, storage, and monitoring. Cloud-specific values (authority,
 // Dataverse suffix, FIC audience) come from the per-cloud parameter
 // file; the Bicep itself contains no Azure Global / Azure China literals
@@ -43,9 +43,9 @@ param aadAppClientId string
 param aadAppTenantId string
 
 @description('Mount POST /api/chat alongside the MCP server. Set false for MCP-only deployments.')
-param enableReferenceAgent bool = true
+param enableAgent bool = true
 
-@description('LLM provider — used only when enableReferenceAgent=true. Slice 2 ships `foundry`; Slice 6 adds others.')
+@description('LLM provider — used only when enableAgent=true. Slice 2 ships `foundry`; Slice 6 adds others.')
 @allowed([
   'foundry'
 ])
@@ -84,7 +84,7 @@ var functionAppHost = '${functionAppName}.azurewebsites.net'
 // Cloud-neutral runtime app settings. Nothing here embeds an Azure Global
 // or Azure China hostname — authority / FIC audience / Dataverse suffix
 // all live in src/config.py keyed off CLOUD_ENV (ADR 0003).
-var agentAppSettings = enableReferenceAgent ? {
+var agentAppSettings = enableAgent ? {
   LLM_PROVIDER: llmProvider
   FOUNDRY_PROJECT_ENDPOINT: foundryProjectEndpoint
   FOUNDRY_MODEL: foundryModel
@@ -109,7 +109,7 @@ module functionApp 'modules/function-app.bicep' = {
     managedIdentityPrincipalId: identity.outputs.principalId
     managedIdentityClientId: identity.outputs.clientId
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
-    enableReferenceAgent: enableReferenceAgent
+    enableAgent: enableAgent
     runtimeAppSettings: runtimeAppSettings
   }
 }
@@ -120,7 +120,7 @@ module alerts 'modules/alerts.bicep' = {
     namePrefix: namePrefix
     location: location
     appInsightsId: monitoring.outputs.appInsightsId
-    enableReferenceAgent: enableReferenceAgent
+    enableAgent: enableAgent
     actionGroupId: actionGroupId
   }
 }

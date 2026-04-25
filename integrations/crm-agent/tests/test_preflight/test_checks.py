@@ -190,7 +190,7 @@ async def test_foundry_check_skips_when_agent_disabled():
     result = await check.run()
 
     assert result.status == "skip"
-    assert "ENABLE_REFERENCE_AGENT" in result.detail
+    assert "ENABLE_AGENT" in result.detail
 
 
 async def test_foundry_check_fails_when_no_endpoint_but_agent_enabled():

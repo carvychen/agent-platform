@@ -105,7 +105,7 @@ def test_bicep_whatif_against_scratch_rg(parameters_file, agent_enabled):
     if not rg:
         pytest.skip("BICEP_WHATIF_RESOURCE_GROUP not set — what-if gated")
 
-    # Override enableReferenceAgent on the command line rather than editing
+    # Override enableAgent on the command line rather than editing
     # the parameter file, so the test parametrisation stays visible.
     agent_flag = "true" if agent_enabled else "false"
     result = _run_az(
@@ -119,7 +119,7 @@ def test_bicep_whatif_against_scratch_rg(parameters_file, agent_enabled):
         "--parameters",
         str(_INFRA / parameters_file),
         "--parameters",
-        f"enableReferenceAgent={agent_flag}",
+        f"enableAgent={agent_flag}",
         "--no-prompt",
         "true",
     )

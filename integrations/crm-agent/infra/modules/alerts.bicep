@@ -1,4 +1,4 @@
-// Default alerts for the MCP server + reference agent Function App.
+// Default alerts for the MCP server + agent Function App.
 //
 // The four rules below are the minimum viable "someone is paged if this
 // breaks" coverage — US 20 requires the system to ship with monitoring on
@@ -18,8 +18,8 @@ param location string
 @description('Resource ID of the Application Insights component.')
 param appInsightsId string
 
-@description('Whether the reference agent is deployed; gates the /api/chat-specific alert.')
-param enableReferenceAgent bool
+@description('Whether the agent is deployed; gates the /api/chat-specific alert.')
+param enableAgent bool
 
 @description('Optional action group ID; alerts fire without actions if blank, still visible in Monitor.')
 param actionGroupId string = ''
@@ -129,14 +129,14 @@ resource authFailure 'Microsoft.Insights/scheduledQueryRules@2023-03-15-preview'
 }
 
 // --- 4. /api/chat 4xx spike (agent only) --------------------------------
-// Only deploys when the reference agent is deployed. A 4xx stream on
+// Only deploys when the agent is deployed. A 4xx stream on
 // /api/chat usually means the UI is sending bad payloads or the auth layer
 // is rejecting tokens — neither should be visible to end users.
-resource chatRouteErrors 'Microsoft.Insights/scheduledQueryRules@2023-03-15-preview' = if (enableReferenceAgent) {
+resource chatRouteErrors 'Microsoft.Insights/scheduledQueryRules@2023-03-15-preview' = if (enableAgent) {
   name: '${namePrefix}-alert-chat-4xx'
   location: location
   properties: {
-    displayName: '/api/chat 4xx spike (reference agent)'
+    displayName: '/api/chat 4xx spike (agent)'
     severity: 2
     enabled: true
     evaluationFrequency: 'PT5M'

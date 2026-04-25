@@ -7,7 +7,7 @@
     "dataverseUrl": { "value": "https://REPLACE.crm.dynamics.cn" },
     "aadAppClientId": { "value": "REPLACE-GUID" },
     "aadAppTenantId": { "value": "REPLACE-GUID" },
-    "enableReferenceAgent": { "value": true },
+    "enableAgent": { "value": true },
     "llmProvider": { "value": "foundry" },
     "foundryProjectEndpoint": { "value": "https://REPLACE.services.ai.azure.cn/api/projects/REPLACE" },
     "foundryModel": { "value": "gpt-4o-mini" }

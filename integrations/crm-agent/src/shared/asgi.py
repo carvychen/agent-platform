@@ -3,7 +3,7 @@
 Mounts the MCP `Server` behind a Starlette app. On every request, the
 `Authorization: Bearer <user-jwt>` header is extracted and placed in the
 `current_user_jwt` ContextVar so the MCP tool handlers can read it during the
-OBO exchange. This is the code path exercised equally by the reference agent
+OBO exchange. This is the code path exercised equally by the agent
 and any external MCP client (ADR 0004).
 """
 from __future__ import annotations
@@ -48,7 +48,7 @@ def create_asgi_app(
     agent: Any = None,
 ) -> Starlette:
     """Build an ASGI app exposing MCP over Streamable HTTP, and optionally the
-    reference agent's `/api/chat` SSE endpoint.
+    agent's `/api/chat` SSE endpoint.
 
     The returned Starlette app manages `StreamableHTTPSessionManager.run()`
     via the ASGI lifespan protocol, so it can be mounted directly in
@@ -56,7 +56,7 @@ def create_asgi_app(
     `asgi-lifespan` test harness.
 
     When `agent` is None, the `/api/chat` route is omitted — this is the
-    behaviour selected by `ENABLE_REFERENCE_AGENT=false`.
+    behaviour selected by `ENABLE_AGENT=false`.
     """
     mcp_server = build_server(deps)
     session_manager = StreamableHTTPSessionManager(

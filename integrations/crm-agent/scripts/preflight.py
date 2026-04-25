@@ -57,7 +57,7 @@ from shared.preflight.core import (  # noqa: E402
 
 
 def _agent_enabled() -> bool:
-    return os.environ.get("ENABLE_REFERENCE_AGENT", "true").strip().lower() != "false"
+    return os.environ.get("ENABLE_AGENT", "true").strip().lower() != "false"
 
 
 def _build_foundry_credential():
@@ -178,7 +178,7 @@ async def _amain(output_format: str) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Validate that the MCP server and reference agent can reach every "
+            "Validate that the MCP server and agent can reach every "
             "external dependency they need before deploying."
         )
     )

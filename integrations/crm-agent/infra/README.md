@@ -1,6 +1,6 @@
 # Bicep infrastructure
 
-Deploys the MCP server + reference agent as one Function App per ADR 0002 (self-hosted MCP SDK) and ADR 0004 (HTTP transport between agent and MCP).
+Deploys the MCP server + agent as one Function App per ADR 0002 (self-hosted MCP SDK) and ADR 0004 (HTTP transport between agent and MCP).
 
 ## Layout
 

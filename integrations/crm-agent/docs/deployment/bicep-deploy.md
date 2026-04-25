@@ -2,7 +2,7 @@
 
 **Audience**: Lenovo's platform engineer. Run after [aad-setup.md](./aad-setup.md) and [dataverse-setup.md](./dataverse-setup.md) are complete — Bicep sets up Azure resources but cannot create AAD apps or Dataverse users.
 
-**Output**: a running Function App serving the MCP server (and optionally the reference agent's `/api/chat`) in your target Azure cloud.
+**Output**: a running Function App serving the MCP server (and optionally the agent's `/api/chat`) in your target Azure cloud.
 
 ## Before you start
 
@@ -14,7 +14,7 @@ Have these handy:
 | `AAD_APP_CLIENT_ID` | [aad-setup.md](./aad-setup.md) step 1 |
 | `AAD_APP_TENANT_ID` | [aad-setup.md](./aad-setup.md) step 1 |
 | `DATAVERSE_URL` | D365 Admin Center → environment → URL |
-| `FOUNDRY_PROJECT_ENDPOINT` | Foundry portal → project → Overview (only if `ENABLE_REFERENCE_AGENT=true`) |
+| `FOUNDRY_PROJECT_ENDPOINT` | Foundry portal → project → Overview (only if `ENABLE_AGENT=true`) |
 | Cloud | `global` (Azure Public) or `china` (21Vianet) |
 
 ## Edit the parameter file

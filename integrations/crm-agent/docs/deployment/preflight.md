@@ -21,7 +21,7 @@ Required env vars (or `.env` entries):
 | `AUTH_MODE` | `obo` in production, `app_only_secret` for dev |
 | `DATAVERSE_URL` | Your Dataverse environment URL |
 | `AAD_APP_CLIENT_ID` / `AAD_APP_TENANT_ID` | From [aad-setup.md](./aad-setup.md) |
-| `FOUNDRY_PROJECT_ENDPOINT` / `FOUNDRY_MODEL` | When `ENABLE_REFERENCE_AGENT=true` |
+| `FOUNDRY_PROJECT_ENDPOINT` / `FOUNDRY_MODEL` | When `ENABLE_AGENT=true` |
 
 When running **locally** from the repo, preflight auto-loads the repo-root `.env` if present (gitignored). In **production** (on the Function App) the env vars come from App Settings deployed by Bicep.
 
@@ -49,7 +49,7 @@ The full remediation tree lives in the code (`src/shared/preflight/checks.py`), 
 | `dataverse-whoami` | Dataverse application user not created, OR missing Delegate privilege | Re-walk [dataverse-setup.md](./dataverse-setup.md); the `detail:` line's HTTP code distinguishes these (401 vs 403) |
 | `foundry-reachability` | Cross-tenant credential, missing `Cognitive Services User` role, or wrong `FOUNDRY_MODEL` | See [infra/README.md](../../infra/README.md) post-deploy step 3 for the cross-tenant SP pattern |
 
-Never skipped in prod: any check in `skip` state on a `Production` environment points to misconfiguration (usually `ENABLE_REFERENCE_AGENT=false` silently failing a check that should have run).
+Never skipped in prod: any check in `skip` state on a `Production` environment points to misconfiguration (usually `ENABLE_AGENT=false` silently failing a check that should have run).
 
 ## In CI
 

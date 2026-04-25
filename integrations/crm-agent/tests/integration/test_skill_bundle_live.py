@@ -1,7 +1,7 @@
 """Live-integration: prove an external MCP client can consume this skill bundle.
 
 The skill bundle is the "instruction manual" layer (Invariant 1): it must
-work with ANY MCP-compliant client, not just our reference agent. This test
+work with ANY MCP-compliant client, not just our agent. This test
 simulates a generic external client:
 
 1. Read `.mcp.json` as a JSON file (same thing Claude Desktop / VS Code MCP do).
@@ -31,8 +31,8 @@ _SKILL_DIR = Path(__file__).resolve().parents[2] / "skills" / "crm-opportunity"
 
 async def test_skill_bundle_works_with_external_mcp_client():
     """Drive the MCP server through the URL pattern in `.mcp.json` to prove
-    external agents can consume this skill identically to the reference
-    agent (Invariant 1)."""
+    external agents can consume this skill identically to this repo's agent
+    (Invariant 1)."""
     from shared.asgi import create_asgi_app
     from shared.auth import build_auth
     from shared.config import get_config
