@@ -1,6 +1,6 @@
-# Skills Platform — Frontend
+# Agent Platform — Frontend
 
-React SPA for the Agent Platform Skills module. Provides a full-featured UI for creating, editing, importing/exporting, and installing AI agent skills following the [agentskills.io](https://agentskills.io) open standard.
+React SPA for the Agent Platform admin plane. Provides UIs for the Skill Hub (full CRUD + editor + import/export + install-token flow) and the MCP Hub (register external MCP server endpoints); Prompt Hub and Agent Hub are 501 stubs today.
 
 Features a VS Code-like editor with Monaco, Azure AD authentication with **RBAC role control** (SkillAdmin / SkillUser), multi-agent install guides, and ZIP import/export.
 
