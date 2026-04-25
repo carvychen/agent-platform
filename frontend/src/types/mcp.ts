@@ -32,3 +32,14 @@ export interface McpCreateRequest {
   auth_type: McpAuthType;
   metadata?: McpMetadata;
 }
+
+// PUT body — omits immutable fields (name / source / created_at / updated_at).
+// Backend rejects the immutable keys via pydantic `extra='forbid'`.
+export interface McpUpdateRequest {
+  display_name: string;
+  description: string;
+  endpoint_url: string;
+  transport: McpTransport;
+  auth_type: McpAuthType;
+  metadata?: McpMetadata;
+}

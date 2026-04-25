@@ -1,4 +1,5 @@
 import { Plug, Link as LinkIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { Mcp } from "../../types/mcp";
 
 const iconColors = [
@@ -29,7 +30,10 @@ interface McpCardProps {
 export function McpCard({ mcp, index }: McpCardProps) {
   const colorClass = iconColors[index % iconColors.length];
   return (
-    <div className="block p-5 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.04)] border border-transparent">
+    <Link
+      to={`/mcps/${encodeURIComponent(mcp.name)}`}
+      className="block p-5 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.04)] border border-transparent hover:border-primary/30 transition-colors"
+    >
       <div className="flex items-start justify-between">
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
           <Plug className="w-5 h-5" />
@@ -54,6 +58,6 @@ export function McpCard({ mcp, index }: McpCardProps) {
           {authLabels[mcp.auth_type]}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
